@@ -1,0 +1,5 @@
+root = true
+
+[*.c,lib/ui/**.c,lib/ui/**.h]
+indent_style = tab
+indent_size = 4
