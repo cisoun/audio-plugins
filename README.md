@@ -16,7 +16,6 @@ dnf install cairo-devel
 Then from the root folder:
 
 ```sh
-scripts/build_pugl.sh
 make
 make run
 ```
