@@ -5,7 +5,7 @@ UIWidget* ui_button(UIButton* b) {
 	set_default(b->color, COLOR_PRIMARY);
 	set_default(b->size.width, 80);
 	set_default(b->size.height, 20);
-	b->draw     = ui_button_draw;
+	set_default(b->draw, ui_button_draw);
 	b->mouse_up = ui_button_mouse_up;
 	b->type     = WIDGET_BUTTON;
 	return (UIWidget*)b;
@@ -150,7 +150,7 @@ void ui_knob_set_value(UIWidget* w, float value) {
 }
 
 UIWidget* ui_text(UIText* t) {
-	t->draw = ui_text_draw;
+	set_default(t->draw, ui_text_draw);
 	t->type = WIDGET_TEXT;
 	return (UIWidget*)t;
 }
