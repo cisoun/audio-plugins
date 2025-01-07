@@ -18,7 +18,9 @@ typedef struct {
 
 typedef struct {
 	WIDGET
-
+	char** items;
+	int    items_count;
+	int    selected_index;
 } UIList;
 
 typedef struct {
@@ -43,6 +45,8 @@ void      ui_knob_scroll     (UIWidget*, UIDirections, float, float);
 void      ui_knob_set_value  (UIWidget*, float value);
 
 UIWidget* ui_list            (UIList*);
+void      ui_list_draw       (UIWidget*, UIContext*);
+void      ui_list_mouse_up   (UIWidget*, UIMouseButtons);
 
 UIWidget* ui_text            (UIText*);
 void      ui_text_draw       (UIWidget*, UIContext*);

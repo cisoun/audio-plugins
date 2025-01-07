@@ -9,12 +9,13 @@ typedef struct {
 	WIDGET
 	UIButton buttonCancel;
 	UIButton buttonOK;
+	UIList   list;
 	void     (*cancel) (UIWidget*);
-	void     (*close) (UIWidget*);
+	void     (*close)  (UIWidget*);
 } UIFileDialog;
 
 UIWidget* ui_file_dialog(UIFileDialog);
-void     ui_file_dialog_close(UIWidget*);
+void      ui_file_dialog_close(UIWidget*);
 void      ui_file_dialog_destroy(UIWidget*);
 void      ui_file_dialog_draw(UIWidget*, UIContext*);
 void      ui_file_dialog_show(UIWidget*);

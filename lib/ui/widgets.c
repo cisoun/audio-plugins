@@ -1,5 +1,6 @@
 #include "widgets.h"
 #include "backend.h"
+#include "colors.h"
 
 UIWidget* ui_button(UIButton* b) {
 	set_default(b->color, COLOR_PRIMARY);
@@ -20,7 +21,6 @@ void ui_button_draw(UIWidget* w, UIContext* c) {
 			.x = b->position.x + b->size.width / 2,
 			.y = b->position.y + b->size.height / 2
 		},
-		.size   = 12,
 		.bold   = false,
 		.origin = ORIGIN_M
 	};
@@ -149,6 +149,46 @@ void ui_knob_set_value(UIWidget* w, float value) {
 	k->value = min(max(value, 0.0), 1.0);
 }
 
+UIWidget* ui_list (UIList* l) {
+	set_default(l->draw, ui_list_draw);
+	l->type = WIDGET_LIST;
+	return (UIWidget*)l;
+}
+
+void ui_list_draw(UIWidget* w, UIContext* c) {
+	UIList* l = (UIList*)w;
+
+	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
+		.color    = COLOR_DARK[0],
+		.position = w->position,
+		.radius   = 3,
+		.size     = w->size,
+		.stroke   = {
+			.color = COLOR_DARK[3],
+			.width = 1
+		}
+	});
+
+	for (int i = 0; i < l->items_count; i++) {
+		printf("%s\n", l->items[i]);
+		ui_draw_text(c, &(UITextProperties){
+			.color    = COLOR_DARK[8],
+			.position = (UIPosition){
+				w->position.x + 10,
+				w->position.y + 15 + 16 * i
+			},
+			.origin   = ORIGIN_W,
+			.text     = l->items[i]
+		});
+	}
+
+	//DRAW SELECTION
+}
+
+void ui_list_mouse_up(UIWidget* w, UIMouseButtons b){
+
+}
+
 UIWidget* ui_text(UIText* t) {
 	set_default(t->draw, ui_text_draw);
 	t->type = WIDGET_TEXT;
@@ -173,7 +213,7 @@ UISize ui_text_get_size(UIContext* c, UITextProperties* p) {
 	cairo_set_font_size(c, p->size);
 	cairo_text_extents(c, p->text, &te);
 	return (UISize){
-		.width = te.width,
+		.width  = te.width,
 		.height = te.height
 	};
 }

@@ -61,6 +61,7 @@ typedef enum {
 typedef enum {
 	WIDGET_BUTTON,
 	WIDGET_FILE_DIALOG,
+	WIDGET_LIST,
 	WIDGET_KNOB,
 	WIDGET_TEXT
 } UIWidgetTypes;

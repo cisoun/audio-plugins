@@ -19,6 +19,15 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 
 	memcpy(fd, &args, sizeof(UIFileDialog));
 
+	char** files = malloc(sizeof(char*) * 2);
+	files[0] = "Hello";
+	files[1] = "World";
+
+	fd->list = (UIList) {
+		.items = files,
+		.items_count = 2
+	};
+
 	fd->buttonCancel = (UIButton){
 		.click  = handle_cancel,
 		.parent = widget,
@@ -31,6 +40,7 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 		.text   = "OK"
 	};
 
+	ui_list(&fd->list);
 	ui_button(&fd->buttonCancel);
 	ui_button(&fd->buttonOK);
 
@@ -64,6 +74,10 @@ void ui_file_dialog_draw(UIWidget* w, UIContext* c) {
 		.size     = w->size
 	});
 
+	UIList* list       = (UIList*)&fd->list;
+	list->position     = (UIPosition){10, 10};
+	list->size         = (UISize){w->size.width - 20, w->size.height - 50};
+
 	UIButton* ok       = (UIButton*)&fd->buttonOK;
 	ok->position.x     = w->size.width - 10 - ok->size.width;
 	ok->position.y     = w->size.height - 10 - ok->size.height;
@@ -73,6 +87,7 @@ void ui_file_dialog_draw(UIWidget* w, UIContext* c) {
 	cancel->position.x = w->size.width - 20 - cancel->size.width - ok->size.width;
 	cancel->position.y = w->size.height - 10 - cancel->size.height;
 
+	ui_list_draw((UIWidget*)list, c);
 	ui_button_draw((UIWidget*)cancel, c);
 	ui_button_draw((UIWidget*)ok, c);
 }
