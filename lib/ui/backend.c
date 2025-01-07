@@ -231,11 +231,11 @@ void ui_widget_mouse_down(UIWidget* w, UIMouseButtons b) {
 }
 
 void ui_widget_mouse_enter(UIWidget* w) {
-	w->state |= WIDGET_STATE_HOVERED;
+	flag_on(w->state, WIDGET_STATE_HOVERED);
 }
 
 void ui_widget_mouse_leave(UIWidget* w) {
-	w->state &= ~WIDGET_STATE_HOVERED;
+	flag_off(w->state, WIDGET_STATE_HOVERED);
 }
 
 void ui_widget_mouse_move(UIWidget* w, UIPosition screen, UIPosition client) {
