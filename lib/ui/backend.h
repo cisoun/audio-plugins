@@ -17,6 +17,7 @@
 #define UIApp(...) ui_app(&(UIApp)__VA_ARGS__)
 #define UIKnob(...) ui_knob(&(UIKnob)__VA_ARGS__)
 
+#define clamp(a, b, c) min(max(a, b), c)
 #define deg2rad(d) (d) * (M_PI / 180)
 #define flag_off(s, f) s &= ~f
 #define flag_on(s, f) s |= f
