@@ -165,6 +165,8 @@ void ui_draw_rounded_rectangle(UIContext* c, UIRoundedRectangleProperties* p) {
 }
 
 void ui_draw_text(UIContext* c, UITextProperties* p) {
+	set_default(p->size, 12);
+
 	cairo_font_slant_t slant = p->italic ?
 		CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL;
 	cairo_font_weight_t weigth = p->bold ?
