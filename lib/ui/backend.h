@@ -20,8 +20,8 @@
 #define deg2rad(d) (d) * (M_PI / 180)
 #define flag_off(s, f) s &= ~f
 #define flag_on(s, f) s |= f
-#define has_flag(s, f) s & f
-#define is_flag(s, f) s == f
+#define has_flag(s, f) (s & f)
+#define is_flag(s, f) (s == f)
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define set_default(a, b) (a = a ? a : b)
