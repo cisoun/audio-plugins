@@ -3,6 +3,7 @@
 #include "lib/ui/backend.h"
 #include "lib/ui/file-dialog.h"
 #include "lib/ui/ui.h"
+#include "lib/ui/widgets.h"
 
 UIColor* COLOR_DARK = COLOR_ROSADE;
 UIColor* COLOR_PRIMARY = COLOR_YELLOW;
@@ -13,6 +14,7 @@ UIWidget* knob_dry_wet;
 UIWidget* knob_output;
 UIWidget* text_input;
 UIWidget* text_dry_wet;
+UIWidget* text_file;
 UIWidget* text_output;
 UIWidget* button;
 UIWidget* title;
@@ -20,7 +22,7 @@ UIWidget* dialog;
 UIWindow* window;
 
 void (*window_draw)(UIWindow*, UIContext*);
-void (*knob_mouse_move)(UIWidget*, UIPosition, UIPosition);
+void (*knob_mouse_move)(UIWidget*, UIPosition);
 
 static void on_button_click(UIWidget* w) {
 	ui_file_dialog_show(dialog);
@@ -30,6 +32,12 @@ static void on_close(UIWindow* w) {
 	ui_app_close(w->app);
 }
 
+static void on_dialog_close(UIWidget* w, char* path) {
+	if (path) {
+		((UIText*)text_file)->text = path;
+	}
+}
+
 static void on_key_down(UIWindow* w, int code) {
 	// Exit on 'q' or escape.
 	if (code == 12 || code == 53) {
@@ -37,7 +45,7 @@ static void on_key_down(UIWindow* w, int code) {
 	}
 }
 
-static void on_mouse_move(UIWindow* w, UIPosition screen, UIPosition client) {
+static void on_mouse_move(UIWindow* w, UIPosition client) {
 	if (w->state & WINDOW_STATE_HOVERED) {
 		printf("CURSOR: %d : %d\n", client.x, client.y);
 	}
@@ -134,6 +142,13 @@ int main(int argc, char** argv) {
 		.text     = "Open IR"
 	});
 
+	text_file = ui_text(&(UIText){
+		.color     = COLOR_DARK[5],
+		.origin    = ORIGIN_W,
+		.position  = {20 + 110, 63},
+		.text      = "No file selected"
+	});
+
 	title = ui_text(&(UIText){
 		.bold      = true,
 		.color     = COLOR_DARK[5],
@@ -142,9 +157,12 @@ int main(int argc, char** argv) {
 		.text      = "Impulse me daddy LV2 test"
 	});
 
+	printf("DIALOG IN\n");
 	dialog = ui_file_dialog((UIFileDialog){
-		.size     = {500, 300},
+		.close = on_dialog_close,
+		.size  = {500, 300}
 	});
+	printf("DIALOG OUT\n");
 
 	UIWindow* window = ui_window(&(UIWindow){
 		.on_close      = on_close,
@@ -153,15 +171,16 @@ int main(int argc, char** argv) {
 		.size          = {500, 300},
 		.title         = "Test LV2",
 		.widgets       = (UIWidget*[]){
-			button,
-			knob_input,
-			text_input,
-			knob_dry_wet,
-			text_dry_wet,
-			knob_output,
-			text_output,
 			title,
-			dialog,
+			button,
+			text_file,
+			knob_input,
+			knob_output,
+			knob_dry_wet,
+			text_input,
+			text_dry_wet,
+			text_output,
+			dialog
 		}
 	}, app);
 

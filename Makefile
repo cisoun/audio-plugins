@@ -27,7 +27,7 @@ darwin: $(LIB_DIR)/pugl/build_$(TARGET) $(BUILD_DIR)
 	   -framework CoreVideo \
 	   -lglfw \
 	   $(HB_DIR)/lib/libcairo.dylib \
-	   main.c lib/ui/*.c -o $(BUILD_DIR)/test
+	   main.c lib/ui/*.c lib/*.c -o $(BUILD_DIR)/test
 
 linux: $(LIB_DIR)/pugl/build_$(TARGET) $(BUILD_DIR)
 	cc $(CC_FLAGS) \

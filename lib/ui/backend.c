@@ -3,12 +3,17 @@
 #include "file-dialog.h"
 #include "widgets.h"
 
+static double mouse_click_time;
+
 static void handle_key_down(UIWindow* w, const PuglEvent* e) {
 	w->on_key_down(w, e->key.keycode);
 }
 
 static void handle_mouse_down(UIWindow* w, const PuglEvent* e) {
-	ui_window_mouse_down(w, (UIMouseButtons)e->button.button);
+	int x = e->motion.x / w->scale,
+	    y = e->motion.y / w->scale;
+	UIMouseButtons b = e->button.button;
+	ui_window_mouse_down(w, (UIPosition){x, y}, b);
 }
 
 static void handle_mouse_enter(UIWindow* w) {
@@ -24,16 +29,13 @@ static void handle_mouse_leave(UIWindow* w) {
 }
 
 static void handle_mouse_move(UIWindow* w, const PuglEvent* e) {
-	ui_window_mouse_move(
-		w,
-		(UIPosition){e->motion.xRoot, e->motion.yRoot},
-		(UIPosition){e->motion.x, e->motion.y}
-	);
+	int x = e->motion.x / w->scale,
+	    y = e->motion.y / w->scale;
+	ui_window_mouse_move(w, (UIPosition){x, y});
 }
 
 static void handle_mouse_scroll(UIWindow* w, const PuglEvent* e) {
 	if (w->hovered_widget && w->hovered_widget->scroll) {
-		//printf("DX: %f DY: %f\n", e->scroll.dx, e->scroll.dy);
 		w->hovered_widget->scroll(
 			w->hovered_widget,
 			(UIDirections)e->scroll.direction,
@@ -44,7 +46,12 @@ static void handle_mouse_scroll(UIWindow* w, const PuglEvent* e) {
 }
 
 static void handle_mouse_up(UIWindow* w, const PuglEvent* e) {
-	ui_window_mouse_up(w, (UIMouseButtons)e->button.button);
+	UIPosition p = {
+		.x = e->motion.x / w->scale,
+	    .y = e->motion.y / w->scale
+	};
+	UIMouseButtons b = e->button.button;
+	ui_window_mouse_up(w, p, b, e->button.time);
 }
 
 static PuglStatus handle_event(PuglView* view, const PuglEvent* event)
@@ -165,7 +172,7 @@ void ui_draw_rounded_rectangle(UIContext* c, UIRoundedRectangleProperties* p) {
 }
 
 void ui_draw_text(UIContext* c, UITextProperties* p) {
-	set_default(p->size, 12);
+	set_default(p->size, UI_DEFAULT_FONT_SIZE);
 
 	cairo_font_slant_t slant = p->italic ?
 		CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL;
@@ -178,32 +185,36 @@ void ui_draw_text(UIContext* c, UITextProperties* p) {
 	cairo_text_extents_t te;
 	cairo_text_extents(c, p->text, &te);
 
-	//UISize size = ui_text_get_size(c, p);
-	UISize size = {te.width, te.height};
+	// Trying stupid approximation to improve vertical alignment.
+	int height = p->size * 0.8; //-te.y_bearing;
 	int x = p->position.x;
 	int y = p->position.y;
 	switch (p->origin) {
-		case ORIGIN_NW: y += size.height; break;
-		case ORIGIN_N:  x -= size.width / 2; y += size.height; break;
-		case ORIGIN_NE: x -= size.width;     y += size.height; break;
-		case ORIGIN_W:  y += size.height / 2; break;
-		case ORIGIN_M:  x -= size.width / 2; y += size.height / 2; break;
-		case ORIGIN_E:  x -= size.width;     y += size.height / 2; break;
+		case ORIGIN_NW: y += height; break;
+		case ORIGIN_N:  x -= te.width / 2; y += height; break;
+		case ORIGIN_NE: x -= te.width;     y += height; break;
+		case ORIGIN_W:  y += height / 2; break;
+		case ORIGIN_M:  x -= te.width / 2; y += height / 2; break;
+		case ORIGIN_E:  x -= te.width;     y += height / 2; break;
 		case ORIGIN_SW: break;
-		case ORIGIN_S:  x -= size.width / 2; break;
-		case ORIGIN_SE: x -= size.width; break;
+		case ORIGIN_S:  x -= te.width / 2; break;
+		case ORIGIN_SE: x -= te.width; break;
 		default: break;
 	}
 
-	// ui_draw_rectangle(c, &(UIRectangleProperties){
-	// 	.color    = {1, 0, 0, 1},
-	// 	.position = {x, y - te.height},
-	// 	.size     = size,
-	// });
+	// cairo_set_source_rgba(c, 1,0,0,1);
+	// cairo_rectangle(c, x, y + te.y_bearing, te.width, -te.y_bearing);
+	// cairo_fill(c);
 
 	cairo_set_source_rgba(c, ui_color_to_cairo(p->color));
 	cairo_move_to(c, x, y);
 	cairo_show_text(c, p->text);
+}
+
+void ui_widget_double_click(UIWidget* w) {
+	if (w->double_click) {
+		w->double_click(w);
+	}
 }
 
 void ui_widget_draw(UIWidget* w, UIContext* c) {
@@ -225,10 +236,10 @@ static bool ui_widget_intersect(UIWidget* w, int x, int y) {
 	       y < w->position.y + w->size.height;
 }
 
-void ui_widget_mouse_down(UIWidget* w, UIMouseButtons b) {
+void ui_widget_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b) {
 	flag_on(w->state, WIDGET_STATE_CLICKED);
 	if (w->mouse_down) {
-		w->mouse_down(w, b);
+		w->mouse_down(w, (UIPosition){p.x - w->position.x, p.y - w->position.y}, b);
 	}
 }
 
@@ -240,16 +251,16 @@ void ui_widget_mouse_leave(UIWidget* w) {
 	flag_off(w->state, WIDGET_STATE_HOVERED);
 }
 
-void ui_widget_mouse_move(UIWidget* w, UIPosition screen, UIPosition client) {
+void ui_widget_mouse_move(UIWidget* w, UIPosition p) {
 	if (w->mouse_move) {
-		w->mouse_move(w, screen, client);
+		w->mouse_move(w, (UIPosition){p.x - w->position.x, p.y - w->position.y});
 	}
 }
 
-void ui_widget_mouse_up(UIWidget* w, UIMouseButtons b) {
+void ui_widget_mouse_up(UIWidget* w, UIPosition p, UIMouseButtons b) {
 	flag_off(w->state, WIDGET_STATE_CLICKED);
 	if (w->mouse_up) {
-		w->mouse_up(w, b);
+		w->mouse_up(w, (UIPosition){p.x - w->position.x, p.y - w->position.y}, b);
 	}
 }
 
@@ -304,28 +315,29 @@ void ui_window_draw_begin(UIWindow* w, UIContext* c) {
 }
 
 void ui_window_draw_end(UIWindow* w, UIContext* c) {
+	// DEBUG
 	return;
-	// if (w->focused_widget) {
-	// 	UIWidget* widget = w->focused_widget;
-	// 	ui_draw_rectangle(c, &(UIRectangleProperties){
-	// 		.position = widget->position,
-	// 		.size     = widget->size,
-	// 		.stroke   = {.color = {1, 0, 0, 1}, .width = 2}
-	// 	});
-	// }
+	if (w->hovered_widget) {
+		UIWidget* widget = w->hovered_widget;
+		ui_draw_rectangle(c, &(UIRectangleProperties){
+			.position = widget->position,
+			.size     = widget->size,
+			.stroke   = {.color = {1, 0, 0, 1}, .width = 2}
+		});
+	}
 }
 
 void ui_window_draw_widgets(UIWindow* w, UIContext* c) {
 	for (int i = 0; i < w->widgets_count; i++) {
 		UIWidget* widget = w->widgets[i];
-		ui_widget_draw(widget, c);
+		ui_widget_draw(widget, c); // Don't use widget->draw!
 	}
 }
 
-void ui_window_mouse_down(UIWindow* w, UIMouseButtons b) {
+void ui_window_mouse_down(UIWindow* w, UIPosition client, UIMouseButtons b) {
 	if (w->hovered_widget) {
 		flag_on(w->state, WINDOW_STATE_GRABBED);
-		ui_widget_mouse_down(w->hovered_widget, b);
+		ui_widget_mouse_down(w->hovered_widget, client, b);
 	}
 }
 
@@ -344,9 +356,9 @@ static void ui_window_find_hovered_widget(UIWidget** focused, UIWidget* widget, 
 	}
 }
 
-void ui_window_mouse_move(UIWindow* w, UIPosition screen, UIPosition client) {
-	const int client_x = client.x / w->scale;
-	const int client_y = client.y / w->scale;
+void ui_window_mouse_move(UIWindow* w, UIPosition client) {
+	const int client_x = client.x;
+	const int client_y = client.y;
 	UIPosition position = {client_x, client_y};
 
 	if (is_flag(w->state, WINDOW_STATE_HOVERED)) {
@@ -368,14 +380,20 @@ void ui_window_mouse_move(UIWindow* w, UIPosition screen, UIPosition client) {
 	}
 
 	if (w->hovered_widget) {
-		ui_widget_mouse_move(w->hovered_widget, screen, client);
+		ui_widget_mouse_move(w->hovered_widget, client);
 	}
 }
 
-void ui_window_mouse_up(UIWindow* w, UIMouseButtons b) {
+void ui_window_mouse_up(UIWindow* w, UIPosition p, UIMouseButtons b, double t) {
+	flag_off(w->state, WINDOW_STATE_GRABBED);
 	if (w->hovered_widget) {
-		flag_off(w->state, WINDOW_STATE_GRABBED);
-		ui_widget_mouse_up(w->hovered_widget, b);
+		UIWidget* widget = w->hovered_widget;
+		if (t - mouse_click_time <= UI_DOUBLE_CLICK_TIME) {
+			ui_widget_double_click(widget);
+		} else {
+			ui_widget_mouse_up(widget, p, b);
+		}
+		mouse_click_time = t;
 	}
 }
 

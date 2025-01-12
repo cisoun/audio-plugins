@@ -25,12 +25,11 @@
 #define is_flag(s, f) (s == f)
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
-#define set_default(a, b) (a = a ? a : b)
+#define set_default(a, b) ((a) = (a) ? a : b)
 #define ui_color_to_cairo(c) (c).r, (c).g, (c).b, (c).a
 
-static const float _UI_KNOB_ANGLE_MIN   = deg2rad(140);
-static const float _UI_KNOB_ANGLE_MAX   = deg2rad(400);
-static const float _UI_KNOB_ANGLE_RANGE = _UI_KNOB_ANGLE_MAX - _UI_KNOB_ANGLE_MIN;
+static const float  UI_DEFAULT_FONT_SIZE = 12;
+static const double UI_DOUBLE_CLICK_TIME = 0.5; // Seconds.
 
 typedef enum {
 	DIRECTION_DOWN  = PUGL_SCROLL_DOWN,
@@ -166,12 +165,13 @@ typedef struct {
 	UISize         size; \
 	UIWidgetStates state; \
 	UIWidgetTypes  type; \
-	void           (*draw)       (UIWidget*, UIContext*); \
-	void           (*click)      (UIWidget*); \
-	void           (*mouse_down) (UIWidget*, UIMouseButtons); \
-	void           (*mouse_move) (UIWidget*, UIPosition, UIPosition); \
-	void           (*mouse_up)   (UIWidget*, UIMouseButtons); \
-	void           (*scroll)     (UIWidget*, UIDirections, float, float);
+	void           (*draw)         (UIWidget*, UIContext*); \
+	void           (*click)        (UIWidget*); \
+	void           (*double_click) (UIWidget*); \
+	void           (*mouse_down)   (UIWidget*, UIPosition, UIMouseButtons); \
+	void           (*mouse_move)   (UIWidget*, UIPosition); \
+	void           (*mouse_up)     (UIWidget*, UIPosition, UIMouseButtons); \
+	void           (*scroll)       (UIWidget*, UIDirections, float, float);
 
 struct UIWidget {
 	WIDGET
@@ -195,7 +195,7 @@ struct UIWindow {
 	void           (*on_key_down)    (UIWindow*, int);
 	void           (*on_mouse_enter) (UIWindow*);
 	void           (*on_mouse_leave) (UIWindow*);
-	void           (*on_mouse_move)  (UIWindow*, UIPosition, UIPosition);
+	void           (*on_mouse_move)  (UIWindow*, UIPosition);
 };
 
 UIApp*    ui_app                    (UIApp*);
@@ -208,12 +208,13 @@ void      ui_draw_lines             (UIContext*, UILinesProperties*);
 void      ui_draw_rectangle         (UIContext*, UIRectangleProperties*);
 void      ui_draw_rounded_rectangle (UIContext*, UIRoundedRectangleProperties*);
 void      ui_draw_text              (UIContext*, UITextProperties*);
+void      ui_widget_double_click    (UIWidget*);
 void      ui_widget_draw            (UIWidget*, UIContext*);
 void      ui_widget_mouse_enter     (UIWidget*);
 void      ui_widget_mouse_leave     (UIWidget*);
-void      ui_widget_mouse_down      (UIWidget*, UIMouseButtons);
-void      ui_widget_mouse_move      (UIWidget*, UIPosition, UIPosition);
-void      ui_widget_mouse_up        (UIWidget*, UIMouseButtons);
+void      ui_widget_mouse_down      (UIWidget*, UIPosition, UIMouseButtons);
+void      ui_widget_mouse_move      (UIWidget*, UIPosition);
+void      ui_widget_mouse_up        (UIWidget*, UIPosition, UIMouseButtons);
 void      ui_widget_on_scroll       (UIWidget*, UIDirections, float, float);
 UIWindow* ui_window                 (UIWindow*, UIApp*);
 void      ui_window_attach          (UIWindow*, UIWidget**);
@@ -224,11 +225,11 @@ void      ui_window_draw_end        (UIWindow*, UIContext*);
 void      ui_window_draw_widgets    (UIWindow*, UIContext*);
 void      ui_window_on_close        (UIWindow*);
 void      ui_window_on_key_down     (UIWindow*);
-void      ui_window_mouse_down      (UIWindow*, UIMouseButtons);
+void      ui_window_mouse_down      (UIWindow*, UIPosition, UIMouseButtons);
 void      ui_window_on_mouse_enter  (UIWindow*);
 void      ui_window_on_mouse_leave  (UIWindow*);
-void      ui_window_mouse_move      (UIWindow*, UIPosition, UIPosition);
-void      ui_window_mouse_up        (UIWindow*, UIMouseButtons);
+void      ui_window_mouse_move      (UIWindow*, UIPosition);
+void      ui_window_mouse_up        (UIWindow*, UIPosition, UIMouseButtons, double);
 void      ui_window_show            (UIWindow*);
 
 #endif
