@@ -1,5 +1,5 @@
 TARGET    = $(shell uname | tr '[:upper:]' '[:lower:]')
-CC_FLAGS  = -I $(LIB_DIR) -std=gnu11 -Wall
+CC_FLAGS  = -I $(LIB_DIR) -std=gnu11 -Wall $(LDFLAGS_EXTRA) -O1 -g -fsanitize=address -fno-omit-frame-pointer
 BUILD_DIR = build
 HB_DIR    = /opt/homebrew
 LIB_DIR   = lib
