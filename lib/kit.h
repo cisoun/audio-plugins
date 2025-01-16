@@ -1,3 +1,14 @@
+/*
+ * KIT toolkit.
+ *
+ * Notes:
+ *  - Use `calloc` rather than `malloc` to initialize the memory to 0.
+ *    This improves safety.
+ *  - LOGALLOC/LOGFREE to be removed. Useful to trace memory allocations.
+ *    Upon termination, you should see "FREE: 0" in the output. Otherwise, that
+ *    means a memory leak is occuring somewhere.
+ */
+
 #ifndef INTERNAL_H
 #define INTERNAL_H
 
@@ -10,7 +21,6 @@ int allocs;
 
 #define new(t) calloc((LOGALLOC ? 0 : 0) + 1, sizeof(t))
 #define alloc(t, n) calloc((LOGALLOC ? 0 : 0) + n, sizeof(t))
-//#define alloc(t, n) malloc(sizeof(t) * n + (LOGALLOC ? 0 : 0))
 #define destroy(o) LOGFREE; if (o != NULL) free(o); o = NULL
 
 #define kit_string_clone(a) strdup(a); LOGALLOC
@@ -47,8 +57,8 @@ void         kit_array_clear             (KitArray*);
 void         kit_array_destroy           (KitArray*);
 void         kit_array_remove_index      (KitArray*, int);
 
-KitArray*    kit_path_scan               (char* path);
-int          kit_string_ends_with        (const char* text, const char* suffix);
+KitArray*    kit_path_scan               (char*);
+int          kit_string_ends_with        (const char*, const char*);
 
 KitFileInfo* kit_file_info               (KitFileInfo i);
 void         kit_file_info_destroy       (KitFileInfo* i);

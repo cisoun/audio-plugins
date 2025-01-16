@@ -18,7 +18,6 @@ KitArray* kit_array(void) {
 void kit_array_add(KitArray* a, void* i) {
 	assert(a != NULL);
 	a->items = realloc(a->items, sizeof(void*) * (a->count + 1));
-	assert(a->items != NULL);
 	a->items[a->count] = i;
 	a->count++;
 }
@@ -43,11 +42,8 @@ void kit_array_remove_index(KitArray* a, int index) {
 
 KitFileInfo* kit_file_info(KitFileInfo i) {
 	KitFileInfo* kfi = new(KitFileInfo);
-	assert(kfi != NULL);
 	kfi->name = kit_string_clone(i.name);
-	assert(kfi->name);
 	kfi->path = kit_string_clone(i.path);
-	assert(kfi->path);
 	kfi->type = i.type;
 	return kfi;
 }
@@ -61,9 +57,11 @@ void kit_file_info_destroy(KitFileInfo* i) {
 static int kit_file_info_array_compare(const void* a, const void* b) {
 	const KitFileInfo *c = *(KitFileInfo**)a;
 	const KitFileInfo *d = *(KitFileInfo**)b;
+	// Folders first.
 	if (c->type != d->type) {
 		return d->type - c->type;
 	}
+	// Order by name.
 	return strcmp(c->name, d->name);
 }
 

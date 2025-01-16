@@ -279,13 +279,13 @@ void ui_list_clear(UIList* l) {
 }
 
 void ui_list_draw(UIWidget* w, UIContext* c) {
-
+	// Nothing to do now.
 }
 
 void* ui_list_get_selected(UIWidget* w) {
 	UIList* l       = (UIList*)w;
 	KitArray* items = l->items;
-	int index = l->selected_index;
+	const int index = l->selected_index;
 	if (index > -1 && items && items->items[index]) {
 		return items->items[index];
 	}
@@ -301,7 +301,6 @@ void ui_list_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b){
 }
 
 void ui_list_mouse_move(UIWidget* w, UIPosition client){
-	assert(w != NULL);
 	if (has_flag(w->state, WIDGET_STATE_CLICKED)) {
 		ui_list_mouse_down(w, client, 0);
 	}
