@@ -7,13 +7,15 @@
 
 typedef struct {
 	WIDGET
-	UIButton* buttonCancel;
-	UIButton* buttonOK;
-	UIList*   list;
-	char**    entries;
-	char*     path;
-	void      (*cancel) (UIWidget*);
-	void      (*close)  (UIWidget*, char*);
+	UIButton*   buttonCancel;
+	UIButton*   buttonOK;
+	KitArray*   files;
+	char**      filters;
+	UIFileList* list;
+	char*       path;
+	UIText*     text;
+	void        (*cancel) (UIWidget*);
+	void        (*close)  (UIWidget*, char*);
 } UIFileDialog;
 
 UIWidget* ui_file_dialog         (UIFileDialog);

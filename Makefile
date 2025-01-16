@@ -1,5 +1,6 @@
 TARGET    = $(shell uname | tr '[:upper:]' '[:lower:]')
-CC_FLAGS  = -I $(LIB_DIR) -std=gnu11 -Wall $(LDFLAGS_EXTRA) -O1 -g -fsanitize=address -fno-omit-frame-pointer
+CC_DEBUG_FLAGS = -O1 -g -fsanitize=address -fno-omit-frame-pointer
+CC_FLAGS  = -I $(LIB_DIR) -std=gnu11 -Wall $(LDFLAGS_EXTRA) $(CC_DEBUG_FLAGS)
 BUILD_DIR = build
 HB_DIR    = /opt/homebrew
 LIB_DIR   = lib

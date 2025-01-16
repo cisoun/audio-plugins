@@ -2,6 +2,7 @@
 #include "colors.h"
 #include "file-dialog.h"
 #include "widgets.h"
+#include <stdio.h>
 
 static double mouse_click_time;
 
@@ -172,13 +173,14 @@ void ui_draw_rounded_rectangle(UIContext* c, UIRoundedRectangleProperties* p) {
 }
 
 void ui_draw_text(UIContext* c, UITextProperties* p) {
-	set_default(p->size, UI_DEFAULT_FONT_SIZE);
+	set_default_float(p->size, UI_DEFAULT_FONT_SIZE);
 
 	cairo_font_slant_t slant = p->italic ?
 		CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL;
 	cairo_font_weight_t weigth = p->bold ?
 		CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL;
 
+	cairo_set_source_rgba(c, ui_color_to_cairo(p->color));
 	cairo_select_font_face(c, "sans-serif", slant, weigth);
 	cairo_set_font_size(c, p->size);
 
@@ -205,8 +207,6 @@ void ui_draw_text(UIContext* c, UITextProperties* p) {
 	// cairo_set_source_rgba(c, 1,0,0,1);
 	// cairo_rectangle(c, x, y + te.y_bearing, te.width, -te.y_bearing);
 	// cairo_fill(c);
-
-	cairo_set_source_rgba(c, ui_color_to_cairo(p->color));
 	cairo_move_to(c, x, y);
 	cairo_show_text(c, p->text);
 }
@@ -269,35 +269,34 @@ void ui_widget_on_scroll(UIWidget* w, UIDirections d, float dx, float dy) {
 }
 
 UIWindow* ui_window(UIWindow* w, UIApp* a) {
-	w->app   = a;
-	set_default(w->scale, 2);
 	PuglView* view = puglNewView(a->world);
 	puglSetViewString(view, PUGL_WINDOW_TITLE, w->title);
 	puglSetSizeHint  (view, PUGL_DEFAULT_SIZE, w->size.width * w->scale, w->size.height * w->scale);
-	//puglSetSizeHint  (view, PUGL_MIN_SIZE, w->size.width, w->size.height);
-	//puglSetSizeHint(view, PUGL_MIN_ASPECT, 1, 1);
-	//puglSetSizeHint(view, PUGL_MAX_ASPECT, 16, 9);
+	//puglSetSizeHint (view, PUGL_MIN_SIZE, w->size.width, w->size.height);
+	//puglSetSizeHint (view, PUGL_MIN_ASPECT, 1, 1);
+	//puglSetSizeHint (view, PUGL_MAX_ASPECT, 16, 9);
 	puglSetViewHint  (view, PUGL_RESIZABLE, w->resizable);
 	puglSetViewHint  (view, PUGL_IGNORE_KEY_REPEAT, PUGL_TRUE);
 	puglSetHandle    (view, w);
 	puglSetBackend   (view, puglCairoBackend());
 	puglSetViewHint  (view, PUGL_IGNORE_KEY_REPEAT, true);
 	puglSetEventFunc (view, handle_event);
-	w->view  = view;
-	set_default(w->draw, ui_window_draw);
-	set_default(w->draw_begin, ui_window_draw_begin);
-	set_default(w->draw_end, ui_window_draw_end);
-	ui_window_attach(w, w->widgets);
+	set_default      (w->draw,       ui_window_draw);
+	set_default      (w->draw_begin, ui_window_draw_begin);
+	set_default      (w->draw_end,   ui_window_draw_end);
+	ui_window_attach (w, w->widgets);
+	w->app  = a;
+	w->view = view;
 	return w;
 }
 
 void ui_window_attach(UIWindow* w, UIWidget** widgets) {
 	w->widgets = widgets;
-	int count  = 0;
-	while (widgets[count]) {
-		count++;
-	}
-	w->widgets_count = count - 1;
+	// int count  = 0;
+	// while (widgets[count]) {
+	// 	count++;
+	// }
+	// w->widgets_count = count - 1;
 }
 
 void ui_window_close(UIWindow* w) {
@@ -389,6 +388,7 @@ void ui_window_mouse_up(UIWindow* w, UIPosition p, UIMouseButtons b, double t) {
 	if (w->hovered_widget) {
 		UIWidget* widget = w->hovered_widget;
 		if (t - mouse_click_time <= UI_DOUBLE_CLICK_TIME) {
+			ui_widget_mouse_up(widget, p, b);
 			ui_widget_double_click(widget);
 		} else {
 			ui_widget_mouse_up(widget, p, b);

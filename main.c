@@ -1,13 +1,11 @@
 #include <stdio.h>
 #include <math.h>
-#include "lib/ui/backend.h"
 #include "lib/ui/file-dialog.h"
-#include "lib/ui/ui.h"
 #include "lib/ui/widgets.h"
+#include "ui/ui.h"
 
-UIColor* COLOR_DARK = COLOR_ROSADE;
+UIColor* COLOR_DARK    = COLOR_ROSADE;
 UIColor* COLOR_PRIMARY = COLOR_YELLOW;
-
 UIApp*    app;
 UIWidget* knob_input;
 UIWidget* knob_dry_wet;
@@ -16,8 +14,8 @@ UIWidget* text_input;
 UIWidget* text_dry_wet;
 UIWidget* text_file;
 UIWidget* text_output;
+UIWidget* text_title;
 UIWidget* button;
-UIWidget* title;
 UIWidget* dialog;
 UIWindow* window;
 
@@ -149,7 +147,7 @@ int main(int argc, char** argv) {
 		.text      = "No file selected"
 	});
 
-	title = ui_text(&(UIText){
+	text_title = ui_text(&(UIText){
 		.bold      = true,
 		.color     = COLOR_DARK[5],
 		.font_size = 16,
@@ -157,31 +155,32 @@ int main(int argc, char** argv) {
 		.text      = "Impulse me daddy LV2 test"
 	});
 
-	printf("DIALOG IN\n");
 	dialog = ui_file_dialog((UIFileDialog){
-		.close = on_dialog_close,
-		.size  = {500, 300}
+		.close   = on_dialog_close,
+		.filters = (char*[5]){".wav", ".flac", ".ogg", ".c"},
+		.size    = {500, 300}
 	});
-	printf("DIALOG OUT\n");
 
 	UIWindow* window = ui_window(&(UIWindow){
 		.on_close      = on_close,
 		.on_key_down   = on_key_down,
 		.on_mouse_move = on_mouse_move,
+		.scale         = 2,
 		.size          = {500, 300},
 		.title         = "Test LV2",
 		.widgets       = (UIWidget*[]){
-			title,
 			button,
-			text_file,
+			knob_dry_wet,
 			knob_input,
 			knob_output,
-			knob_dry_wet,
-			text_input,
 			text_dry_wet,
+			text_file,
+			text_input,
 			text_output,
+			text_title,
 			dialog
-		}
+		},
+		.widgets_count = 10
 	}, app);
 
 	window_draw  = window->draw;
@@ -193,6 +192,7 @@ int main(int argc, char** argv) {
 
 	ui_window_close        (window);
 
+	//ui_text_destroy        (text_file);
 	ui_file_dialog_destroy (dialog);
 	ui_app_destroy         (app);
 

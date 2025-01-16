@@ -1,6 +1,10 @@
 #ifndef UI_BACKEND_H
 #define UI_BACKEND_H
 
+#include "../kit.h"
+#include "cairo/cairo.h"
+#include "pugl/cairo.h"
+#include "pugl/pugl.h"
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>
@@ -8,14 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../kit.h"
-#include "cairo/cairo.h"
-#include "pugl/pugl.h"
-#include "pugl/cairo.h"
 
 #define UIContext cairo_t
 #define UIApp(...) ui_app(&(UIApp)__VA_ARGS__)
-#define UIKnob(...) ui_knob(&(UIKnob)__VA_ARGS__)
 
 #define clamp(a, b, c) min(max(a, b), c)
 #define deg2rad(d) (d) * (M_PI / 180)
@@ -25,7 +24,8 @@
 #define is_flag(s, f) (s == f)
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
-#define set_default(a, b) ((a) = (a) ? a : b)
+#define set_default(a, b) if ((a) == 0) (a) = (b)
+#define set_default_float(a, b) if ((a) <= 0) (a) = (b)
 #define ui_color_to_cairo(c) (c).r, (c).g, (c).b, (c).a
 
 static const float  UI_DEFAULT_FONT_SIZE = 12;

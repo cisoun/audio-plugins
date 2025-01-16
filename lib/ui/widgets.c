@@ -1,19 +1,34 @@
-#include "widgets.h"
 #include "backend.h"
 #include "colors.h"
+#include "widgets.h"
 
 const int UI_LIST_ITEM_HEIGHT = 18;
 
 static int knob_last_y = 0;
 
 UIWidget* ui_button(UIButton* b) {
-	set_default(b->color, COLOR_PRIMARY);
-	set_default(b->size.width, 80);
+	set_default(b->color,       COLOR_PRIMARY);
 	set_default(b->size.height, 20);
-	set_default(b->draw, ui_button_draw);
-	b->mouse_up = ui_button_mouse_up;
+	set_default(b->size.width,  80);
+	set_default(b->draw,        ui_button_draw);
+	set_default(b->mouse_up,    ui_button_mouse_up);
 	b->type     = WIDGET_BUTTON;
 	return (UIWidget*)b;
+}
+
+UIButton* ui_button_new() {
+	UIButton* b    = new(UIButton);
+	b->color       = COLOR_PRIMARY;
+	b->size        = (UISize){80, 20};
+	b->draw        = ui_button_draw;
+	b->mouse_up    = ui_button_mouse_up;
+	b->type        = WIDGET_BUTTON;
+	return b;
+}
+
+inline void ui_button_destroy(UIButton* w) {
+	UIButton* b = (UIButton*)w;
+	destroy(b);
 }
 
 void ui_button_draw(UIWidget* w, UIContext* c) {
@@ -50,6 +65,102 @@ void ui_button_mouse_up(UIWidget* w, UIPosition client, UIMouseButtons b) {
 	}
 }
 
+UIWidget* ui_file_list(UIFileList* l) {
+	ui_list((UIList*)l);
+	l->draw = ui_file_list_draw;
+	return (UIWidget*)l;
+}
+
+void ui_file_list_clear(UIWidget* w) {
+	UIFileList* l = (UIFileList*)w;
+	kit_file_info_array_clear(l->items);
+}
+
+void ui_file_list_destroy(UIFileList* f) {
+	destroy(f);
+}
+
+void ui_file_list_draw(UIWidget* w, UIContext* c) {
+	UIFileList* l    = (UIFileList*)w;
+	int x            = w->position.x,
+	    y            = w->position.y,
+	    width        = w->size.width,
+	    height       = w->size.height;
+	const int HEIGHT = l->item_height;
+
+	cairo_save(c);
+
+	cairo_rectangle(c, x, y, width, height);
+	cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[1]));
+	cairo_fill_preserve(c);
+	cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[3]));
+	cairo_set_line_width(c, 1);
+	cairo_stroke(c);
+
+	cairo_rectangle(c, x, y, width, height);
+	cairo_clip(c);
+
+	// Draw odd/even lines.
+	for (int i = -1; i < height / HEIGHT / 2 + 1; i++) {
+		cairo_rectangle(c, x, y + ((int)l->offset_y % (HEIGHT * 2)) + (i * 2 + 1) * HEIGHT, width, HEIGHT);
+		cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[2]));
+		cairo_fill(c);
+	}
+
+	// Draw selection.
+	if (l->selected_index > -1) {
+		cairo_rectangle(c, x, y + l->offset_y + HEIGHT * l->selected_index, width, HEIGHT);
+		cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[4]));
+		cairo_fill(c);
+	}
+
+	// Draw text.
+	KitArray* items = l->items;
+	for (int i = 0; items && i < items->count; i++) {
+		KitFileInfo* fi = items->items[i];
+		if (fi == NULL) {
+			continue;
+		}
+		ui_draw_text(c, &(UITextProperties){
+			.color    =  ui_file_list_is_valid(w, fi) ? COLOR_DARK[8] : COLOR_DARK[5],
+			.position = (UIPosition){
+				w->position.x + 30,
+				w->position.y + l->offset_y + i * HEIGHT + HEIGHT / 2
+			},
+			.origin   = ORIGIN_W,
+			.text     = fi->name,
+			.bold     = (fi->type == KIT_FILE_TYPE_FOLDER)
+		});
+		if (fi->type == KIT_FILE_TYPE_FOLDER) {
+			ui_draw_rectangle(c, &(UIRectangleProperties){
+				.color    = COLOR_DARK[5],
+				.position = {
+					w->position.x + 10,
+					w->position.y + l->offset_y + i * HEIGHT + 4
+				},
+				.size = {10, 10}
+			});
+		}
+	}
+	cairo_restore(c);
+}
+
+bool ui_file_list_is_valid(UIWidget* w, KitFileInfo* fi) {
+	UIFileList* l = (UIFileList*)w;
+	if (l->filters == NULL) {
+		return true;
+	}
+	char** filter = l->filters;
+	while (*filter != NULL) {
+		if (kit_string_ends_with(fi->name, *filter) == 1) {
+			return true;
+		}
+		++filter;
+	}
+	return false;
+}
+
+
 UIWidget* ui_knob(UIKnob* k) {
 	set_default(k->color, COLOR_PRIMARY);
 	k->draw       = ui_knob_draw;
@@ -72,9 +183,9 @@ void ui_knob_draw(UIWidget* w, UIContext* c) {
 	      midY       = k->position.y + midH,
 	      radius     = midW > midH ? midH : midW,
 	      stroke     = radius * 0.4,
-		  knobRadius = radius * 0.6,
-		  arcRadius  = radius - stroke / 2,
-		  angle      = _UI_KNOB_ANGLE_RANGE * k->value + _UI_KNOB_ANGLE_MIN;
+	      knobRadius = radius * 0.6,
+	      arcRadius  = radius - stroke / 2,
+	      angle      = _UI_KNOB_ANGLE_RANGE * k->value + _UI_KNOB_ANGLE_MIN;
 
 	// Knob.
 	ui_draw_circle(c, &(UICircleProperties){
@@ -152,80 +263,45 @@ void ui_knob_set_value(UIWidget* w, float value) {
 }
 
 UIWidget* ui_list (UIList* l) {
-	set_default(l->draw, ui_list_draw);
-	set_default(l->mouse_down, ui_list_mouse_down);
-	set_default(l->mouse_move, ui_list_mouse_move);
-	set_default(l->scroll, ui_list_scroll);
+	l->item_height = UI_LIST_ITEM_HEIGHT;
+	l->draw = ui_list_draw;
+	l->mouse_down = ui_list_mouse_down;
+	l->mouse_move = ui_list_mouse_move;
+	l->scroll = ui_list_scroll;
 	l->type = WIDGET_LIST;
 	return (UIWidget*)l;
 }
 
-void ui_list_draw(UIWidget* w, UIContext* c) {
-	UIList* l = (UIList*)w;
-	int x      = w->position.x,
-	    y      = w->position.y,
-	    width  = w->size.width,
-		height = w->size.height;
-	const int HEIGHT = UI_LIST_ITEM_HEIGHT;
-
-	cairo_save(c);
-
-	cairo_rectangle(c, x, y, width, height);
-	cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[1]));
-	cairo_fill_preserve(c);
-	cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[3]));
-	cairo_set_line_width(c, 1);
-	cairo_stroke(c);
-
-	cairo_rectangle(c, x, y, width, height);
-	cairo_clip(c);
-
-	// Draw odd/even lines.
-	for (int i = -1; i < height / HEIGHT / 2 + 1; i++) {
-		cairo_rectangle(c, x, y + ((int)l->offset_y % (HEIGHT * 2)) + (i * 2 + 1) * HEIGHT, width, HEIGHT);
-		cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[2]));
-		cairo_fill(c);
+void ui_list_clear(UIList* l) {
+	if (l->items) {
+		kit_array_clear(l->items);
 	}
-
-	// Draw selection.
-	if (l->selected_index > -1) {
-		cairo_rectangle(c, x, y + l->offset_y + HEIGHT * l->selected_index, width, HEIGHT);
-		cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[4]));
-		cairo_fill(c);
-	}
-
-	// Draw text.
-	for (int i = 0; l->items && i < l->items_count; i++) {
-		ui_draw_text(c, &(UITextProperties){
-			.color    = kit_text_ends_with(l->items[i], ".c") == 1 ? COLOR_DARK[8] : COLOR_DARK[5],
-			.position = (UIPosition){
-				w->position.x + 10,
-				w->position.y + l->offset_y + i * HEIGHT + HEIGHT / 2
-			},
-			.origin   = ORIGIN_W,
-			.text     = l->items[i]
-		});
-	}
-	cairo_restore(c);
 }
 
-char* ui_list_get_selected(UIWidget* w) {
-	UIList* l = (UIList*)w;
+void ui_list_draw(UIWidget* w, UIContext* c) {
+
+}
+
+void* ui_list_get_selected(UIWidget* w) {
+	UIList* l       = (UIList*)w;
+	KitArray* items = l->items;
 	int index = l->selected_index;
-	if (index > -1 && l->items && l->items[index]) {
-		return l->items[index];
+	if (index > -1 && items && items->items[index]) {
+		return items->items[index];
 	}
 	return NULL;
 }
 
 void ui_list_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b){
 	UIList* l         = (UIList*)w;
-	const int height  = l->items_count * UI_LIST_ITEM_HEIGHT;
-	const int y       = ((p.y - l->offset_y) / height) * l->items_count;
-	l->selected_index = clamp(y, 0, l->items_count - 1);
+	const int count   = l->items->count;
+	const int height  = count * UI_LIST_ITEM_HEIGHT;
+	const int y       = ((p.y - l->offset_y) / height) * count;
+	l->selected_index = clamp(y, 0, count - 1);
 }
 
 void ui_list_mouse_move(UIWidget* w, UIPosition client){
+	assert(w != NULL);
 	if (has_flag(w->state, WIDGET_STATE_CLICKED)) {
 		ui_list_mouse_down(w, client, 0);
 	}
@@ -233,14 +309,29 @@ void ui_list_mouse_move(UIWidget* w, UIPosition client){
 
 void ui_list_scroll(UIWidget* w, UIDirections direction, const float dx, const float dy) {
 	UIList* l     = (UIList*)w;
-	const int min = -(l->items_count * UI_LIST_ITEM_HEIGHT - w->size.height);
+	const int min = -(l->items->count * UI_LIST_ITEM_HEIGHT - w->size.height);
 	l->offset_y   = clamp(l->offset_y + dy, min, 0);
 }
 
 UIWidget* ui_text(UIText* t) {
-	set_default(t->draw, ui_text_draw);
-	t->type = WIDGET_TEXT;
+	t->color     = COLOR_DARK[7];
+	t->draw      = ui_text_draw;
+	t->font_size = UI_DEFAULT_FONT_SIZE;
+	t->type      = WIDGET_TEXT;
 	return (UIWidget*)t;
+}
+
+UIWidget* ui_text_new() {
+	UIText* t    = new(UIText);
+	t->color     = COLOR_DARK[7];
+	t->draw      = ui_text_draw;
+	t->font_size = UI_DEFAULT_FONT_SIZE;
+	t->type      = WIDGET_TEXT;
+	return (UIWidget*)t;
+}
+
+void ui_text_destroy(UIText* t) {
+	destroy(t);
 }
 
 void ui_text_draw(UIWidget* w, UIContext* c) {
