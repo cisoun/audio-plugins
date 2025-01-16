@@ -4,13 +4,19 @@
 #include <dirent.h>
 #include <stdlib.h>
 
-#define destroy(o) free(o); o = NULL
-#define new(t) (t*)malloc(sizeof(t))
+int allocs;
+#define LOGALLOC printf("MALLOC: %d %s:%d\n", ++allocs, __FILE__, __LINE__)
+#define LOGFREE printf("FREE: %d %s:%d\n", --allocs, __FILE__, __LINE__)
 
-#define kit_list_t(t) struct { int count; t** items; }
+#define new(t) calloc((LOGALLOC ? 0 : 0) + 1, sizeof(t))
+#define alloc(t, n) calloc((LOGALLOC ? 0 : 0) + n, sizeof(t))
+//#define alloc(t, n) malloc(sizeof(t) * n + (LOGALLOC ? 0 : 0))
+#define destroy(o) LOGFREE; if (o != NULL) free(o); o = NULL
+
+#define kit_string_clone(a) strdup(a); LOGALLOC
 
 #ifdef _WIN32
-	#define PATH_SEPARATOR "\\"
+	#define PATH_SEPARATOR "\"
 #else
     #define PATH_SEPARATOR "/"
 #endif
@@ -21,17 +27,34 @@ typedef enum {
 } KitFileTypes;
 
 typedef struct {
+	int    count;
+	void** items;
+} KitArray;
+
+typedef struct {
 	char*        name;
 	char*        path;
 	KitFileTypes type;
 } KitFileInfo;
 
-typedef kit_list_t(char) KitFilesList;
+#define kit_array_for_each(a, i) for (void** i = a->items; *i; ++i)
 
-#define kit_list(t) (t*)malloc(sizeof(t*))
-#define kit_list_realloc(t, l, c) realloc(l, sizeof(t*) * l->*)
+//void         destroy               (void*);
 
-void kit_folder_scan    (const char* path, KitFilesList* items);
-int  kit_text_ends_with (const char* text, const char* suffix);
+KitArray*    kit_array                   (void);
+void         kit_array_add               (KitArray*, void*);
+void         kit_array_clear             (KitArray*);
+void         kit_array_destroy           (KitArray*);
+void         kit_array_remove_index      (KitArray*, int);
+
+KitArray*    kit_path_scan               (char* path);
+int          kit_string_ends_with        (const char* text, const char* suffix);
+
+KitFileInfo* kit_file_info               (KitFileInfo i);
+void         kit_file_info_destroy       (KitFileInfo* i);
+
+void         kit_file_info_array_clear   (KitArray*);
+void         kit_file_info_array_destroy (KitArray*);
+
 
 #endif

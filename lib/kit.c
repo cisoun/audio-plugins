@@ -1,29 +1,114 @@
 #include "kit.h"
+#include <assert.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
-void kit_folder_scan(const char* path, KitFilesList* entries) {
-	struct dirent* entry = NULL;
-	DIR* reader          = NULL;
-	reader = opendir(path);
-	if (reader) {
-		entries->items = (char**)malloc(0);
-		entries->count = 0;
-		while ((entry = readdir(reader)) != NULL) {
-			entries->items = (char**)realloc(
-				entries->items,
-				sizeof(char*) * (entries->count + 1)
-			);
-			char* item = (char*)malloc(sizeof(char)*strlen(entry->d_name) + 1);
-			memmove(item, entry->d_name, strlen(entry->d_name));
-			entries->items[entries->count] = item;
-			entries->count++;
-		}
-	}
-	closedir(reader);
+int allocs = 0;
+
+KitArray* kit_array(void) {
+	KitArray* a = new(KitArray);
+	assert(a != NULL);
+	a->items = NULL;
+	a->count = 0;
+	return a;
 }
 
-int kit_text_ends_with(const char* text, const char* suffix) {
+void kit_array_add(KitArray* a, void* i) {
+	assert(a != NULL);
+	a->items = realloc(a->items, sizeof(void*) * (a->count + 1));
+	assert(a->items != NULL);
+	a->items[a->count] = i;
+	a->count++;
+}
+
+void kit_array_clear(KitArray* a) {
+	for (int i = 0; i < a->count; i++) {
+		destroy(a->items[i]);
+	}
+	a->count = 0;
+}
+
+void kit_array_destroy(KitArray* a) {
+	destroy(a);
+}
+
+void kit_array_remove_index(KitArray* a, int index) {
+	for (int i = index; i < a->count - 1; i++) {
+		a[i] = a[i + 1];
+	}
+	a->items = realloc(a->items, sizeof(void*) * (a->count - 1));
+}
+
+KitFileInfo* kit_file_info(KitFileInfo i) {
+	KitFileInfo* kfi = new(KitFileInfo);
+	assert(kfi != NULL);
+	kfi->name = kit_string_clone(i.name);
+	assert(kfi->name);
+	kfi->path = kit_string_clone(i.path);
+	assert(kfi->path);
+	kfi->type = i.type;
+	return kfi;
+}
+
+void kit_file_info_destroy(KitFileInfo* i) {
+	destroy(i->name);
+	destroy(i->path);
+	destroy(i);
+}
+
+static int kit_file_info_array_compare(const void* a, const void* b) {
+	const KitFileInfo *c = *(KitFileInfo**)a;
+	const KitFileInfo *d = *(KitFileInfo**)b;
+	if (c->type != d->type) {
+		return d->type - c->type;
+	}
+	return strcmp(c->name, d->name);
+}
+
+void kit_file_info_array_clear(KitArray* a) {
+	for (int i = 0; i < a->count; i++) {
+		KitFileInfo* k = a->items[i];
+		kit_file_info_destroy(k);
+	}
+	destroy(a->items);
+	a->count = 0;
+}
+
+void kit_file_info_array_destroy(KitArray* a) {
+	if (a->items) {
+		kit_file_info_array_clear(a);
+	}
+	destroy(a);
+}
+
+char* kit_path_parent(char* path) {
+	return strrchr(path, PATH_SEPARATOR[0]);
+}
+
+KitArray* kit_path_scan(char* path) {
+	struct dirent* entry = NULL;
+	DIR* reader          = opendir(path);
+	if (reader) {
+		KitArray* a = kit_array();
+		(void)readdir(reader); // Pass first entry: ".".
+		while ((entry = readdir(reader)) != NULL) {
+			KitFileInfo* kfi = kit_file_info((KitFileInfo){
+				.name = entry->d_name,
+				.path = path,
+				.type = entry->d_type == DT_DIR ? KIT_FILE_TYPE_FOLDER : KIT_FILE_TYPE_FILE,
+			});
+			kit_array_add(a, kfi);
+		}
+		closedir(reader);
+		qsort(a->items, a->count, sizeof(void*), kit_file_info_array_compare);
+		return a;
+	}
+	return NULL;
+}
+
+int kit_string_ends_with(const char* text, const char* suffix) {
 	if (!text || !suffix) {
 		return 0;
 	}
