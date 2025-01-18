@@ -116,6 +116,7 @@ typedef struct {
 } UIArcProperties;
 
 typedef struct {
+	UIColor    color;
 	UIPosition position;
 	float      radius;
 	UIStroke   stroke;
