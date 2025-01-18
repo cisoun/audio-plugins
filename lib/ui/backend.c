@@ -114,7 +114,7 @@ void ui_draw_arc(UIContext* c, UIArcProperties* p) {
 
 void ui_draw_circle(UIContext* c, UICircleProperties* p) {
 	cairo_arc(c, p->position.x, p->position.y, p->radius, 0, 2 * M_PI);
-	cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[5]));
+	cairo_set_source_rgba(c, ui_color_to_cairo(p->color));
 	cairo_fill_preserve(c);
 	cairo_set_source_rgba(c, ui_color_to_cairo(p->stroke.color));
 	cairo_set_line_width(c, p->stroke.width);
