@@ -211,6 +211,10 @@ void ui_draw_text(UIContext* c, UITextProperties* p) {
 	cairo_show_text(c, p->text);
 }
 
+inline void ui_widget_disable(UIWidget* w) {
+	flag_on(w->state, WIDGET_STATE_DISABLED);
+}
+
 void ui_widget_double_click(UIWidget* w) {
 	if (w->double_click) {
 		w->double_click(w);
@@ -227,6 +231,10 @@ void ui_widget_draw(UIWidget* w, UIContext* c) {
 		UIWidget* widget = w->children[i];
 		widget->draw(widget, c);
 	}
+}
+
+inline void ui_widget_enable(UIWidget* w) {
+	flag_off(w->state, WIDGET_STATE_DISABLED);
 }
 
 static bool ui_widget_intersect(UIWidget* w, int x, int y) {
@@ -341,7 +349,10 @@ void ui_window_mouse_down(UIWindow* w, UIPosition client, UIMouseButtons b) {
 }
 
 static void ui_window_find_hovered_widget(UIWidget** focused, UIWidget* widget, UIPosition* p) {
-	if (has_flag(widget->state, WIDGET_STATE_HIDDEN)) {
+	if (
+		has_flag(widget->state, WIDGET_STATE_HIDDEN) ||
+		has_flag(widget->state, WIDGET_STATE_DISABLED)
+	) {
 		return;
 	}
 	if (ui_widget_intersect(widget, p->x, p->y)) {

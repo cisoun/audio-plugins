@@ -53,9 +53,10 @@ typedef enum {
 
 typedef enum {
 	WIDGET_STATE_IDLE    = 0,
-	WIDGET_STATE_HOVERED = 1 << 0,
-	WIDGET_STATE_CLICKED = 1 << 1,
-	WIDGET_STATE_HIDDEN  = 1 << 2,
+	WIDGET_STATE_HOVERED  = 1 << 0,
+	WIDGET_STATE_CLICKED  = 1 << 1,
+	WIDGET_STATE_DISABLED = 1 << 2,
+	WIDGET_STATE_HIDDEN   = 1 << 3
 } UIWidgetStates;
 
 typedef enum {
@@ -203,20 +204,25 @@ UIApp*    ui_app                    (UIApp*);
 void      ui_app_destroy            (UIApp*);
 void      ui_app_close              (UIApp*);
 void      ui_app_run                (UIApp*);
+
 void      ui_draw_arc               (UIContext*, UIArcProperties*);
 void      ui_draw_circle            (UIContext*, UICircleProperties*);
 void      ui_draw_lines             (UIContext*, UILinesProperties*);
 void      ui_draw_rectangle         (UIContext*, UIRectangleProperties*);
 void      ui_draw_rounded_rectangle (UIContext*, UIRoundedRectangleProperties*);
 void      ui_draw_text              (UIContext*, UITextProperties*);
+
 void      ui_widget_double_click    (UIWidget*);
+void      ui_widget_disable         (UIWidget*);
 void      ui_widget_draw            (UIWidget*, UIContext*);
+void      ui_widget_enable          (UIWidget*);
 void      ui_widget_mouse_enter     (UIWidget*);
 void      ui_widget_mouse_leave     (UIWidget*);
 void      ui_widget_mouse_down      (UIWidget*, UIPosition, UIMouseButtons);
 void      ui_widget_mouse_move      (UIWidget*, UIPosition);
 void      ui_widget_mouse_up        (UIWidget*, UIPosition, UIMouseButtons);
 void      ui_widget_on_scroll       (UIWidget*, UIDirections, float, float);
+
 UIWindow* ui_window                 (UIWindow*, UIApp*);
 void      ui_window_attach          (UIWindow*, UIWidget**);
 void      ui_window_close           (UIWindow*);
