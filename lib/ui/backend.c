@@ -401,10 +401,11 @@ void ui_window_mouse_up(UIWindow* w, UIPosition p, UIMouseButtons b, double t) {
 		if (t - mouse_click_time <= UI_DOUBLE_CLICK_TIME) {
 			ui_widget_mouse_up(widget, p, b);
 			ui_widget_double_click(widget);
+			mouse_click_time = 0;
 		} else {
 			ui_widget_mouse_up(widget, p, b);
+			mouse_click_time = t;
 		}
-		mouse_click_time = t;
 	}
 }
 

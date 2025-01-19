@@ -1,11 +1,17 @@
 #include <stdio.h>
 #include <math.h>
+#include "lib/kit.h"
+#include "lib/ui/backend.h"
 #include "lib/ui/file-dialog.h"
 #include "lib/ui/widgets.h"
 #include "ui/ui.h"
 
-UIColor* COLOR_DARK    = COLOR_ROSADE;
-UIColor* COLOR_PRIMARY = COLOR_YELLOW;
+UIColor* COLOR_DARK       = COLOR_ROSADE;
+UIColor* COLOR_PRIMARY    = COLOR_YELLOW;
+UIColor* COLOR_TEXT       = &COLOR_ROSADE[7];
+UIColor* COLOR_TEXT_LIGHT = &COLOR_ROSADE[4];
+
+char*     file;
 UIApp*    app;
 UIWidget* knob_input;
 UIWidget* knob_dry_wet;
@@ -19,8 +25,8 @@ UIWidget* button;
 UIWidget* dialog;
 UIWindow* window;
 
-void (*window_draw)(UIWindow*, UIContext*);
-void (*knob_mouse_move)(UIWidget*, UIPosition);
+void (*window_draw)     (UIWindow*, UIContext*);
+void (*knob_mouse_move) (UIWidget*, UIPosition);
 
 static void on_button_click(UIWidget* w) {
 	ui_file_dialog_show(dialog);
@@ -31,7 +37,11 @@ static void on_close(UIWindow* w) {
 }
 
 static void on_dialog_close(UIWidget* w, char* path) {
-	if (path) {
+	if (path != NULL) {
+		if (file != NULL) {
+			destroy(file);
+		}
+		file = path;
 		((UIText*)text_file)->text = path;
 	}
 }
@@ -110,7 +120,7 @@ int main(int argc, char** argv) {
 	});
 
 	text_input = ui_text(&(UIText){
-		.color     = COLOR_DARK[5],
+		.color     = &COLOR_DARK[5],
 		.font_size = 12,
 		.origin    = ORIGIN_M,
 		.position  = {20 + 30, 270},
@@ -118,7 +128,7 @@ int main(int argc, char** argv) {
 	});
 
 	text_dry_wet = ui_text(&(UIText){
-		.color     = COLOR_DARK[5],
+		.color     = &COLOR_DARK[5],
 		.font_size = 12,
 		.origin    = ORIGIN_M,
 		.position  = {20 + 30 + 10 + 60, 270},
@@ -126,7 +136,7 @@ int main(int argc, char** argv) {
 	});
 
 	text_output = ui_text(&(UIText){
-		.color     = COLOR_DARK[5],
+		.color     = &COLOR_DARK[5],
 		.font_size = 12,
 		.origin    = ORIGIN_M,
 		.position  = {20 + 60 + 10 + 60 + 10 + 30, 270},
@@ -141,7 +151,7 @@ int main(int argc, char** argv) {
 	});
 
 	text_file = ui_text(&(UIText){
-		.color     = COLOR_DARK[5],
+		.color     = &COLOR_DARK[5],
 		.origin    = ORIGIN_W,
 		.position  = {20 + 110, 63},
 		.text      = "No file selected"
@@ -149,7 +159,7 @@ int main(int argc, char** argv) {
 
 	text_title = ui_text(&(UIText){
 		.bold      = true,
-		.color     = COLOR_DARK[5],
+		.color     = &COLOR_DARK[5],
 		.font_size = 16,
 		.position  = {10, 15},
 		.text      = "Impulse me daddy LV2 test"
@@ -192,7 +202,10 @@ int main(int argc, char** argv) {
 
 	ui_window_close        (window);
 
-	//ui_text_destroy        (text_file);
+	if (file != NULL) {
+		destroy(file);
+	}
+
 	ui_file_dialog_destroy (dialog);
 	ui_app_destroy         (app);
 

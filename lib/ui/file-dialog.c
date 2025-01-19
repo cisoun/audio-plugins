@@ -6,43 +6,69 @@
 #include "file-dialog.h"
 #include "widgets.h"
 
+
+static void open_file(UIFileDialog* fd, KitFileInfo* kfi) {
+	KitFileInfo* fi = ui_list_get_selection((UIWidget*)fd->list);
+	if (fi != NULL) {
+		char* file = kit_string_join3(fi->path, PATH_SEPARATOR, fi->name);
+		ui_file_dialog_close((UIWidget*)fd);
+		fd->close((UIWidget*)fd, file);
+	}
+}
+
+static inline void open_path(UIFileDialog* fd, KitFileInfo* kfi) {
+	char* path = kit_string_join3(kfi->path, PATH_SEPARATOR, kfi->name);
+	ui_file_dialog_scan(fd, path);
+	destroy(path);
+}
+
 static void handle_ok(UIWidget* w) {
-	assert(w->parent);
-	ui_file_dialog_close(w->parent);
+	UIFileDialog* fd  = (UIFileDialog*)w->parent;
+	KitFileInfo*  kfi = ui_file_list_get_selection((UIWidget*)fd->list);
+	if (kfi->type == KIT_FILE_TYPE_FOLDER) {
+		open_path(fd, kfi);
+	} else if (kfi->type == KIT_FILE_TYPE_FILE) { // && ui_file_list_is_valid(w, kfi)) {
+		open_file(fd, kfi);
+	}
 }
 
 static void handle_cancel(UIWidget* w) {
-	assert(w->parent);
 	ui_file_dialog_close(w->parent);
+	UIFileDialog* fd = (UIFileDialog*)w->parent;
+	fd->close(w, NULL);
 }
 
 static void handle_list_double_click(UIWidget* w) {
 	UIFileList* l = (UIFileList*)w;
 	if (l->selected_index > -1) {
-		UIFileDialog* fd    = (UIFileDialog*)l->parent;
-		KitArray*     items = l->items;
-		KitFileInfo*  item  = items->items[l->selected_index];
-		if (item->type == KIT_FILE_TYPE_FOLDER) {
-			size_t l = strlen(item->path) + strlen(PATH_SEPARATOR) + strlen(item->name);
-			char* buffer = alloc(char, l + 1);
-			strcpy(buffer, item->path);
-			strcat(buffer, PATH_SEPARATOR);
-			strcat(buffer, item->name);
-			destroy(fd->path);
-			fd->path = buffer;
-			ui_file_dialog_scan(fd, fd->path);
+		UIFileDialog* fd  = (UIFileDialog*)l->parent;
+		KitFileInfo*  kfi = ui_file_list_get_selection(w);
+		if (kfi->type == KIT_FILE_TYPE_FOLDER) {
+			open_path(fd, kfi);
+		} else {
+			open_file(fd, kfi);
 		}
+	}
+}
+
+static void handle_selection_change(UIWidget* w, int index) {
+	UIFileList*   fl = (UIFileList*)w;
+	UIFileDialog* fd = (UIFileDialog*)fl->parent;
+	if (index > -1) {
+		ui_widget_enable((UIWidget*)fd->buttonOK);
+	} else {
+		ui_widget_disable((UIWidget*)fd->buttonOK);
 	}
 }
 
 UIWidget* ui_file_dialog(UIFileDialog args) {
 	UIFileDialog* fd     = new(UIFileDialog);
 	UIWidget*     widget = (UIWidget*)fd;
-
+	set_default(args.path, ".");
 	memcpy(fd, &args, sizeof(UIFileDialog));
 
-	UIText* text   = new(UIText);
-	text->position = (UIPosition){10, 10};
+	UIText* text           = new(UIText);
+	text->position         = (UIPosition){10, 10};
 	ui_text(text);
 
 	UIFileList* list       = new(UIFileList);
@@ -50,7 +76,7 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 	list->filters          = fd->filters;
 	list->items            = fd->files;
 	list->parent           = widget;
-	list->selected_index   = -1;
+	list->selection_change = handle_selection_change;
 	ui_file_list(list);
 
 	UIButton* cancel       = ui_button_new();
@@ -63,10 +89,10 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 	ok->parent             = widget;
 	ok->text               = "OK";
 
-	fd->text         = text;
-	fd->list         = list;
-	fd->buttonOK     = ok;
-	fd->buttonCancel = cancel;
+	fd->text               = text;
+	fd->list               = list;
+	fd->buttonOK           = ok;
+	fd->buttonCancel       = cancel;
 
 	UIWidget** children = alloc(UIWidget*, 4);
 	children[0] = (UIWidget*)fd->list;
@@ -74,7 +100,6 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 	children[2] = (UIWidget*)fd->buttonCancel;
 	children[3] = (UIWidget*)fd->text;
 
-	set_default(args.path, ".");
 	set_default(fd->filters, (char*[]){});
 	fd->children       = children;
 	fd->children_count = 4;
@@ -87,11 +112,8 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 	return widget;
 }
 
-void ui_file_dialog_close(UIWidget* w) {
+inline void ui_file_dialog_close(UIWidget* w) {
 	flag_on(w->state, WIDGET_STATE_HIDDEN);
-	UIFileDialog* fd = (UIFileDialog*)w;
-	assert(fd->close);
-	fd->close(w, NULL);
 }
 
 void ui_file_dialog_destroy(UIWidget* w) {
@@ -134,21 +156,29 @@ void ui_file_dialog_draw(UIWidget* w, UIContext* c) {
 	cancel->draw((UIWidget*)cancel, c);
 }
 
-void ui_file_dialog_scan(UIFileDialog* fd, char* path) {
-	KitArray* files = fd->files;
-	if (files != NULL) {
-		kit_file_info_array_clear(files);
+void ui_file_dialog_scan(UIFileDialog* fd, const char* path) {
+	if (fd->files != NULL) {
+		kit_file_info_array_clear(fd->files);
 	}
 	char buffer[PATH_MAX];
-	if (realpath(fd->path, buffer)) {
-		KitArray* entries        = kit_path_scan(buffer);
+	if (realpath(path, buffer)) {
+		fd->files = kit_path_scan(buffer);
+		if (fd->files == NULL) {
+			fd->files = kit_array();
+			KitFileInfo* fi = kit_file_info((KitFileInfo){
+				.name = "..",
+				.path = fd->path,
+				.type = KIT_FILE_TYPE_FOLDER
+			});
+			kit_array_add(fd->files, fi);
+		}
+		char* new_path = kit_string_clone(buffer);
 		destroy(fd->path);
-		fd->path                 = kit_string_clone(buffer);
-		fd->files                = entries;
-		fd->list->items          = entries;
+		fd->path                 = new_path;
+		fd->list->items          = fd->files;
 		fd->list->offset_y       = 0;
-		fd->list->selected_index = -1;
-		fd->text->text = fd->path;
+		fd->text->text           = fd->path;
+		ui_list_select((UIWidget*)fd->list, -1);
 	}
 }
 

@@ -22,7 +22,7 @@ UIWidget* ui_file_dialog         (UIFileDialog);
 void      ui_file_dialog_close   (UIWidget*);
 void      ui_file_dialog_destroy (UIWidget*);
 void      ui_file_dialog_draw    (UIWidget*, UIContext*);
-void      ui_file_dialog_scan    (UIFileDialog*, char*);
+void      ui_file_dialog_scan    (UIFileDialog*, const char*);
 void      ui_file_dialog_show    (UIWidget*);
 
 #endif

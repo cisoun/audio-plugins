@@ -3,8 +3,8 @@
 #include "widgets.h"
 
 const int UI_LIST_ITEM_HEIGHT = 18;
-
 static int knob_last_y = 0;
+static inline int ui_list_get_selection_at_position(UIWidget*, UIPosition);
 
 UIWidget* ui_button(UIButton* b) {
 	set_default(b->color,       COLOR_PRIMARY);
@@ -12,17 +12,13 @@ UIWidget* ui_button(UIButton* b) {
 	set_default(b->size.width,  80);
 	set_default(b->draw,        ui_button_draw);
 	set_default(b->mouse_up,    ui_button_mouse_up);
-	b->type     = WIDGET_BUTTON;
+	b->type = WIDGET_BUTTON;
 	return (UIWidget*)b;
 }
 
 UIButton* ui_button_new() {
-	UIButton* b    = new(UIButton);
-	b->color       = COLOR_PRIMARY;
-	b->size        = (UISize){80, 20};
-	b->draw        = ui_button_draw;
-	b->mouse_up    = ui_button_mouse_up;
-	b->type        = WIDGET_BUTTON;
+	UIButton* b = new(UIButton);
+	ui_button(b);
 	return b;
 }
 
@@ -71,7 +67,8 @@ void ui_button_mouse_up(UIWidget* w, UIPosition client, UIMouseButtons b) {
 
 UIWidget* ui_file_list(UIFileList* l) {
 	ui_list((UIList*)l);
-	l->draw = ui_file_list_draw;
+	l->draw       = ui_file_list_draw;
+	l->mouse_down = ui_file_list_mouse_down;
 	l->type       = WIDGET_FILE_LIST;
 	return (UIWidget*)l;
 }
@@ -122,21 +119,25 @@ void ui_file_list_draw(UIWidget* w, UIContext* c) {
 	// Draw text.
 	KitArray* items = l->items;
 	for (int i = 0; items && i < items->count; i++) {
-		KitFileInfo* fi = items->items[i];
-		if (fi == NULL) {
+		KitFileInfo* item = items->items[i];
+		if (item == NULL) {
 			continue;
 		}
+		UIColor* color = COLOR_TEXT;
+	 	if (item->type == KIT_FILE_TYPE_FILE && !ui_file_list_is_valid(w, item)) {
+			color = COLOR_TEXT_LIGHT;
+		}
 		ui_draw_text(c, &(UITextProperties){
-			.color    =  ui_file_list_is_valid(w, fi) ? COLOR_DARK[8] : COLOR_DARK[5],
+			.color    =  *color,
 			.position = (UIPosition){
 				w->position.x + 30,
 				w->position.y + l->offset_y + i * HEIGHT + HEIGHT / 2
 			},
 			.origin   = ORIGIN_W,
-			.text     = fi->name,
-			.bold     = (fi->type == KIT_FILE_TYPE_FOLDER)
+			.text     = item->name,
+			.bold     = (item->type == KIT_FILE_TYPE_FOLDER)
 		});
-		if (fi->type == KIT_FILE_TYPE_FOLDER) {
+		if (item->type == KIT_FILE_TYPE_FOLDER) {
 			ui_draw_rectangle(c, &(UIRectangleProperties){
 				.color    = COLOR_DARK[5],
 				.position = {
@@ -148,6 +149,10 @@ void ui_file_list_draw(UIWidget* w, UIContext* c) {
 		}
 	}
 	cairo_restore(c);
+}
+
+inline KitFileInfo* ui_file_list_get_selection(UIWidget* w) {
+	return (KitFileInfo*)ui_list_get_selection(w);
 }
 
 bool ui_file_list_is_valid(UIWidget* w, KitFileInfo* fi) {
@@ -165,6 +170,19 @@ bool ui_file_list_is_valid(UIWidget* w, KitFileInfo* fi) {
 	return false;
 }
 
+void ui_file_list_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b) {
+	UIFileList* fl   = (UIFileList*)w;
+	int index        = ui_list_get_selection_at_position(w, p);
+	KitFileInfo* kfi = (KitFileInfo*)fl->items->items[index];
+	if (
+		kfi->type == KIT_FILE_TYPE_FOLDER ||
+		(kfi->type == KIT_FILE_TYPE_FILE && ui_file_list_is_valid(w, kfi))
+	) {
+		ui_list_select(w, index);
+	} else {
+		ui_list_select(w, -1);
+	};
+}
 
 UIWidget* ui_knob(UIKnob* k) {
 	set_default(k->color, COLOR_PRIMARY);
@@ -194,6 +212,7 @@ void ui_knob_draw(UIWidget* w, UIContext* c) {
 
 	// Knob.
 	ui_draw_circle(c, &(UICircleProperties){
+		.color    = COLOR_DARK[5],
 		.radius   = radius * 0.6,
 		.position = {midX, midY}
 	});
@@ -268,12 +287,13 @@ void ui_knob_set_value(UIWidget* w, float value) {
 }
 
 UIWidget* ui_list (UIList* l) {
-	l->item_height = UI_LIST_ITEM_HEIGHT;
-	l->draw = ui_list_draw;
-	l->mouse_down = ui_list_mouse_down;
-	l->mouse_move = ui_list_mouse_move;
-	l->scroll = ui_list_scroll;
-	l->type = WIDGET_LIST;
+	l->draw           = ui_list_draw;
+	l->item_height    = UI_LIST_ITEM_HEIGHT;
+	l->mouse_down     = ui_list_mouse_down;
+	l->mouse_move     = ui_list_mouse_move;
+	l->scroll         = ui_list_scroll;
+	l->selected_index = -1;
+	l->type           = WIDGET_LIST;
 	return (UIWidget*)l;
 }
 
@@ -287,7 +307,7 @@ void ui_list_draw(UIWidget* w, UIContext* c) {
 	// Nothing to do now.
 }
 
-void* ui_list_get_selected(UIWidget* w) {
+void* ui_list_get_selection(UIWidget* w) {
 	UIList* l       = (UIList*)w;
 	KitArray* items = l->items;
 	const int index = l->selected_index;
@@ -297,24 +317,39 @@ void* ui_list_get_selected(UIWidget* w) {
 	return NULL;
 }
 
-void ui_list_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b){
-	UIList* l         = (UIList*)w;
-	const int count   = l->items->count;
-	const int height  = count * UI_LIST_ITEM_HEIGHT;
-	const int y       = ((p.y - l->offset_y) / height) * count;
-	l->selected_index = clamp(y, 0, count - 1);
+static inline int ui_list_get_selection_at_position(UIWidget* w, UIPosition p) {
+	UIList* l        = (UIList*)w;
+	const int count  = l->items->count;
+	const int height = count * UI_LIST_ITEM_HEIGHT;
+	const int y      = ((p.y - l->offset_y) / height) * count;
+	return clamp(y, 0, count - 1);
+}
+
+void ui_list_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b) {
+	ui_list_select(w, ui_list_get_selection_at_position(w, p));
 }
 
 void ui_list_mouse_move(UIWidget* w, UIPosition client){
 	if (has_flag(w->state, WIDGET_STATE_CLICKED)) {
-		ui_list_mouse_down(w, client, 0);
+		//ui_list_mouse_down(w, client, 0);
 	}
 }
 
 void ui_list_scroll(UIWidget* w, UIDirections direction, const float dx, const float dy) {
 	UIList* l     = (UIList*)w;
+	if (l->items == NULL) {
+		return;
+	}
 	const int min = -(l->items->count * UI_LIST_ITEM_HEIGHT - w->size.height);
 	l->offset_y   = clamp(l->offset_y + dy, min, 0);
+}
+
+void ui_list_select(UIWidget* w, int index) {
+	UIList* l         = (UIList*)w;
+	l->selected_index = clamp(index, -1, l->items->count - 1);
+	if (l->selection_change) {
+		l->selection_change(w, l->selected_index);
+	}
 }
 
 UIWidget* ui_text(UIText* t) {
