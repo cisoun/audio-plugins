@@ -32,10 +32,12 @@ inline void ui_button_destroy(UIButton* w) {
 }
 
 void ui_button_draw(UIWidget* w, UIContext* c) {
-	UIButton* b = (UIButton*)w;
+	UIButton* b  = (UIButton*)w;
+	bool hovered = has_flag(w->state, WIDGET_STATE_HOVERED);
+	bool enabled = !has_flag(w->state, WIDGET_STATE_DISABLED);
 	UITextProperties tp = {
 		.text  = b->text,
-		.color = b->color[9],
+		.color = b->color[enabled ? 9 : 4],
 		.position = {
 			.x = b->position.x + b->size.width / 2,
 			.y = b->position.y + b->size.height / 2
@@ -43,17 +45,19 @@ void ui_button_draw(UIWidget* w, UIContext* c) {
 		.bold   = false,
 		.origin = ORIGIN_M
 	};
-	bool hovered = w->state & WIDGET_STATE_HOVERED;
+	UIColor color_fill   = enabled ? hovered ? b->color[6] : b->color[5] : b->color[3];
+	UIColor color_stroke = enabled ? hovered ? b->color[7] : b->color[6] : b->color[2];
 	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
-		.color    = hovered ? b->color[6] : b->color[5],
+		.color    = color_fill,
 		.position = b->position,
 		.radius   = 3.0,
 		.size     = b->size,
 		.stroke   = {
-			.color = hovered ? b->color[7] : b->color[6],
+			.color = color_stroke,
 			.width = 1
 		}
 	});
+
 	ui_draw_text(c, &tp);
 }
 
@@ -314,7 +318,7 @@ void ui_list_scroll(UIWidget* w, UIDirections direction, const float dx, const f
 }
 
 UIWidget* ui_text(UIText* t) {
-	t->color     = COLOR_DARK[7];
+	t->color     = COLOR_TEXT;
 	t->draw      = ui_text_draw;
 	t->font_size = UI_DEFAULT_FONT_SIZE;
 	t->type      = WIDGET_TEXT;
@@ -323,7 +327,7 @@ UIWidget* ui_text(UIText* t) {
 
 UIWidget* ui_text_new() {
 	UIText* t    = new(UIText);
-	t->color     = COLOR_DARK[7];
+	t->color     = COLOR_TEXT;
 	t->draw      = ui_text_draw;
 	t->font_size = UI_DEFAULT_FONT_SIZE;
 	t->type      = WIDGET_TEXT;
@@ -338,7 +342,7 @@ void ui_text_draw(UIWidget* w, UIContext* c) {
 	UIText* t = (UIText*)w;
 	UITextProperties tp = {
 		.bold     = t->bold,
-		.color    = t->color,
+		.color    = *t->color,
 		.origin   = t->origin,
 		.position = t->position,
 		.size     = t->font_size,
