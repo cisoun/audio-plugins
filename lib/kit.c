@@ -1,5 +1,7 @@
 #include "kit.h"
 #include <assert.h>
+#include <limits.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -116,4 +118,30 @@ int kit_string_ends_with(const char* text, const char* suffix) {
 		return 0;
 	}
 	return strncmp(text + text_length - suffix_length, suffix, suffix_length) == 0;
+}
+
+char* kit_string_join(const char* s0, ...) {
+	if (s0 == NULL) {
+		return NULL;
+	};
+	const char* s;
+	va_list     va;
+	char*       result = alloc(char, strlen(s0) + 1);
+	strcpy(result, s0);
+	va_start(va, s0);
+	while ((s = va_arg(va, const char*)) && *s != '\0') {
+		result = realloc(result, strlen(result) + strlen(s) + 1);
+		strcat(result, s);
+	}
+	va_end(va);
+	return result;
+}
+
+inline char* kit_string_join3(const char* a, const char* b, const char* c) {
+	size_t l      = strlen(a) + strlen(b) + strlen(c);
+	char*  buffer = alloc(char, l + 1);
+	strncpy(buffer, a, strlen(a));
+	strcat(buffer, b);
+	strcat(buffer, c);
+	return buffer;
 }

@@ -66,5 +66,7 @@ void         kit_file_info_destroy       (KitFileInfo* i);
 void         kit_file_info_array_clear   (KitArray*);
 void         kit_file_info_array_destroy (KitArray*);
 
+char*        kit_string_join             (const char*, ...);
+char*        kit_string_join3            (const char*, const char*, const char*);
 
 #endif
