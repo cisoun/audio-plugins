@@ -68,6 +68,7 @@ void ui_button_mouse_up(UIWidget* w, UIPosition client, UIMouseButtons b) {
 UIWidget* ui_file_list(UIFileList* l) {
 	ui_list((UIList*)l);
 	l->draw = ui_file_list_draw;
+	l->type       = WIDGET_FILE_LIST;
 	return (UIWidget*)l;
 }
 
