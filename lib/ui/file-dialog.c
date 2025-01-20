@@ -109,6 +109,8 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 	fd->state          = WIDGET_STATE_HIDDEN;
 	fd->type           = WIDGET_FILE_DIALOG;
 
+	ui_file_dialog_scan(fd, fd->path);
+
 	return widget;
 }
 
@@ -183,7 +185,5 @@ void ui_file_dialog_scan(UIFileDialog* fd, const char* path) {
 }
 
 void ui_file_dialog_show(UIWidget* w) {
-	UIFileDialog* fd = (UIFileDialog*)w;
 	flag_off(w->state, WIDGET_STATE_HIDDEN);
-	ui_file_dialog_scan(fd, fd->path);
 }
