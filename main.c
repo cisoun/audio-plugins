@@ -36,13 +36,15 @@ static void on_close(UIWindow* w) {
 	ui_app_close(w->app);
 }
 
-static void on_dialog_close(UIWidget* w, char* path) {
 	if (path != NULL) {
+static void on_dialog_close(UIWidget* w, KitFileInfo* kfi) {
+	if (kfi != NULL) {
 		if (file != NULL) {
-			destroy(file);
+			kit_file_info_destroy(file);
 		}
-		file = path;
-		((UIText*)text_file)->text = path;
+		file           = kit_file_info(*kfi);
+		UIText* tf     = (UIText*)text_file;
+		tf->text       = file->name;
 	}
 }
 
@@ -203,7 +205,7 @@ int main(int argc, char** argv) {
 	ui_window_close        (window);
 
 	if (file != NULL) {
-		destroy(file);
+		kit_file_info_destroy(file);
 	}
 
 	ui_file_dialog_destroy (dialog);

@@ -15,7 +15,7 @@ typedef struct {
 	char*       path;
 	UIText*     text;
 	void        (*cancel) (UIWidget*);
-	void        (*close)  (UIWidget*, char*);
+	void        (*close)  (UIWidget*, KitFileInfo*);
 } UIFileDialog;
 
 UIWidget* ui_file_dialog         (UIFileDialog);

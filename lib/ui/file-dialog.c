@@ -10,9 +10,8 @@
 static void open_file(UIFileDialog* fd, KitFileInfo* kfi) {
 	KitFileInfo* fi = ui_list_get_selection((UIWidget*)fd->list);
 	if (fi != NULL) {
-		char* file = kit_string_join3(fi->path, PATH_SEPARATOR, fi->name);
 		ui_file_dialog_close((UIWidget*)fd);
-		fd->close((UIWidget*)fd, file);
+		fd->close((UIWidget*)fd, fi);
 	}
 }
 
