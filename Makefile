@@ -2,7 +2,7 @@ TARGET    = $(shell uname | tr '[:upper:]' '[:lower:]')
 CC_DEBUG_FLAGS = -O1 -g -fsanitize=address -fno-omit-frame-pointer
 CC_FLAGS  = -I $(LIB_DIR) -std=gnu11 -Wall $(LDFLAGS_EXTRA) $(CC_DEBUG_FLAGS)
 BUILD_DIR = build
-HB_DIR    = /opt/homebrew
+BREW_DIR  = /opt/homebrew
 LIB_DIR   = lib
 
 .DEFAULT_GOAL := $(TARGET)
@@ -22,8 +22,8 @@ darwin: $(LIB_DIR)/pugl/build_$(TARGET) $(BUILD_DIR)
 	   -I $(LIB_DIR) \
 	   -I $(LIB_DIR)/pugl/include \
 	   -I $(LIB_DIR)/pugl/src \
-	   -I $(HB_DIR)/include \
-	   -L $(HB_DIR)/lib \
+	   -I $(BREW_DIR)/include \
+	   -L $(BREW_DIR)/lib \
 	   -framework AppKit \
 	   -framework CoreVideo \
 	   -lglfw \
