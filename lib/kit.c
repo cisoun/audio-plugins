@@ -138,10 +138,12 @@ char* kit_string_join(const char* s0, ...) {
 }
 
 inline char* kit_string_join3(const char* a, const char* b, const char* c) {
-	size_t l      = strlen(a) + strlen(b) + strlen(c);
-	char*  buffer = alloc(char, l + 1);
-	strncpy(buffer, a, strlen(a));
-	strcat(buffer, b);
-	strcat(buffer, c);
+	size_t la     = strlen(a);
+	size_t lb     = strlen(b);
+	size_t lc     = strlen(c);
+	char*  buffer = alloc(char, la + lb + lc + 1);
+	strncpy(buffer, a, la);
+	strncpy(buffer + la, b, lb);
+	strncpy(buffer + la + lb, c, lc);
 	return buffer;
 }
