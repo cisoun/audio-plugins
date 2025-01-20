@@ -2,6 +2,7 @@
 #define UI_BACKEND_H
 
 #include "../kit.h"
+#include "../kit-audio.h"
 #include "cairo/cairo.h"
 #include "pugl/cairo.h"
 #include "pugl/pugl.h"
@@ -65,7 +66,8 @@ typedef enum {
 	WIDGET_FILE_LIST,
 	WIDGET_LIST,
 	WIDGET_KNOB,
-	WIDGET_TEXT
+	WIDGET_TEXT,
+	WIDGET_WAVEFORM
 } UIWidgetTypes;
 
 typedef enum {

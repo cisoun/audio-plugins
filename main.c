@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <math.h>
+#include "lib/kit-audio.h"
 #include "lib/kit.h"
 #include "lib/ui/backend.h"
 #include "lib/ui/file-dialog.h"
+#include "lib/ui/waveform.h"
 #include "lib/ui/widgets.h"
 #include "ui/ui.h"
 
@@ -11,19 +13,21 @@ UIColor* COLOR_PRIMARY    = COLOR_YELLOW;
 UIColor* COLOR_TEXT       = &COLOR_ROSADE[7];
 UIColor* COLOR_TEXT_LIGHT = &COLOR_ROSADE[4];
 
-char*     file;
-UIApp*    app;
-UIWidget* knob_input;
-UIWidget* knob_dry_wet;
-UIWidget* knob_output;
-UIWidget* text_input;
-UIWidget* text_dry_wet;
-UIWidget* text_file;
-UIWidget* text_output;
-UIWidget* text_title;
-UIWidget* button;
-UIWidget* dialog;
-UIWindow* window;
+KitFileInfo* file;
+UIApp*       app;
+UIWidget*    knob_input;
+UIWidget*    knob_dry_wet;
+UIWidget*    knob_output;
+UIWidget*    text_input;
+UIWidget*    text_dry_wet;
+UIWidget*    text_file;
+UIWidget*    text_output;
+UIWidget*    text_title;
+UIWidget*    button;
+UIWidget*    waveform;
+UIWidget*    dialog;
+UIWindow*    window;
+KitAudio*    audio;
 
 void (*window_draw)     (UIWindow*, UIContext*);
 void (*knob_mouse_move) (UIWidget*, UIPosition);
@@ -36,15 +40,22 @@ static void on_close(UIWindow* w) {
 	ui_app_close(w->app);
 }
 
-	if (path != NULL) {
 static void on_dialog_close(UIWidget* w, KitFileInfo* kfi) {
 	if (kfi != NULL) {
 		if (file != NULL) {
 			kit_file_info_destroy(file);
 		}
+		if (audio != NULL) {
+			kit_audio_destroy(audio);
+		}
 		file           = kit_file_info(*kfi);
 		UIText* tf     = (UIText*)text_file;
 		tf->text       = file->name;
+		char* path     = kit_string_join3(kfi->path, PATH_SEPARATOR, kfi->name);
+		audio          = kit_audio_from(path);
+		UIWaveform* wf = (UIWaveform*)waveform;
+		wf->audio      = audio;
+		destroy(path);
 	}
 }
 
@@ -77,10 +88,14 @@ static void on_window_draw(UIWindow* w, UIContext* c) {
 	});
 
 	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
-		.color    = COLOR_DARK[1],
+		.color    = COLOR_DARK[0],
 		.position = {10, 40 + 45 + 10},
 		.radius   = 6,
 		.size     = {w->size.width - 20, 95},
+		.stroke   = {
+			.width = 1,
+			.color = COLOR_DARK[3]
+		}
 	});
 
 	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
@@ -167,6 +182,11 @@ int main(int argc, char** argv) {
 		.text      = "Impulse me daddy LV2 test"
 	});
 
+	waveform = ui_waveform(&(UIWaveform){
+		.position = {11, 96},
+		.size     = {478, 93}
+	});
+
 	dialog = ui_file_dialog((UIFileDialog){
 		.close   = on_dialog_close,
 		.filters = (char*[5]){".wav", ".flac", ".ogg", ".c"},
@@ -190,9 +210,10 @@ int main(int argc, char** argv) {
 			text_input,
 			text_output,
 			text_title,
+			waveform,
 			dialog
 		},
-		.widgets_count = 10
+		.widgets_count = 11
 	}, app);
 
 	window_draw  = window->draw;
@@ -206,6 +227,10 @@ int main(int argc, char** argv) {
 
 	if (file != NULL) {
 		kit_file_info_destroy(file);
+	}
+
+	if (audio != NULL) {
+		kit_audio_destroy(audio);
 	}
 
 	ui_file_dialog_destroy (dialog);
