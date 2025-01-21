@@ -6,7 +6,7 @@ Install the prerequisites:
 
 ```sh
 # MacOS
-brew install cairo
+brew install cairo libsndfile lv2
 # Debian/Ubuntu
 apt-get install libcairo2-dev
 # Fedora
