@@ -29,7 +29,7 @@ UIWidget*    dialog;
 UIWindow*    window;
 KitAudio*    audio;
 
-void (*window_draw)     (UIWindow*, UIContext*);
+void (*window_draw)     (UIWidget*, UIContext*);
 void (*knob_mouse_move) (UIWidget*, UIPosition);
 
 static void on_button_click(UIWidget* w) {
@@ -67,12 +67,13 @@ static void on_key_down(UIWindow* w, int code) {
 }
 
 static void on_mouse_move(UIWindow* w, UIPosition client) {
-	if (w->state & WINDOW_STATE_HOVERED) {
+	if (w->state & WIDGET_STATE_HOVERED) {
 		printf("CURSOR: %d : %d\n", client.x, client.y);
 	}
 }
 
-static void on_window_draw(UIWindow* w, UIContext* c) {
+static void on_window_draw(UIWidget* widget, UIContext* c) {
+	UIWindow* w = (UIWindow*)widget;
 	ui_window_draw_begin(w, c);
 
 	ui_draw_rectangle(c, &(UIRectangleProperties){
@@ -200,7 +201,7 @@ int main(int argc, char** argv) {
 		.scale         = 2,
 		.size          = {500, 300},
 		.title         = "Test LV2",
-		.widgets       = (UIWidget*[]){
+		.children      = (UIWidget*[]){
 			button,
 			knob_dry_wet,
 			knob_input,
@@ -213,7 +214,7 @@ int main(int argc, char** argv) {
 			waveform,
 			dialog
 		},
-		.widgets_count = 11
+		.children_count = 11
 	}, app);
 
 	window_draw  = window->draw;

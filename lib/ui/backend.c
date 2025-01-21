@@ -18,13 +18,13 @@ static void handle_mouse_down(UIWindow* w, const PuglEvent* e) {
 }
 
 static void handle_mouse_enter(UIWindow* w) {
-	flag_on(w->state, WINDOW_STATE_HOVERED);
+	flag_on(w->state, WIDGET_STATE_HOVERED);
 }
 
 static void handle_mouse_leave(UIWindow* w) {
-	flag_off(w->state, WINDOW_STATE_HOVERED);
-	for (int i = 0; i < w->widgets_count; i++) {
-		UIWidget* widget = w->widgets[i];
+	flag_off(w->state, WIDGET_STATE_HOVERED);
+	for (int i = 0; i < w->children_count; i++) {
+		UIWidget* widget = w->children[i];
 		flag_off(widget->state, WIDGET_STATE_HOVERED);
 	}
 }
@@ -69,10 +69,11 @@ static PuglStatus handle_event(PuglView* view, const PuglEvent* event)
 		case PUGL_REALIZE:        break;
 		case PUGL_UPDATE:
 			puglPostRedisplay(view);
+			//puglPostRedisplayRect(view, (PuglRect){20, 30, 40, 50});
 			break;
 		case PUGL_EXPOSE: {
 			UIContext* context = (UIContext*)puglGetContext(view);
-			window->draw(window, context);
+			window->draw((UIWidget*)window, context);
 			break;
 		}
 		case PUGL_CLOSE:
@@ -292,14 +293,17 @@ UIWindow* ui_window(UIWindow* w, UIApp* a) {
 	set_default      (w->draw,       ui_window_draw);
 	set_default      (w->draw_begin, ui_window_draw_begin);
 	set_default      (w->draw_end,   ui_window_draw_end);
-	ui_window_attach (w, w->widgets);
+	ui_window_attach (w, w->children);
 	w->app  = a;
 	w->view = view;
 	return w;
 }
 
 void ui_window_attach(UIWindow* w, UIWidget** widgets) {
-	w->widgets = widgets;
+	w->children = widgets;
+	for (int i = 0; i < w->children_count; i++) {
+		w->children[i]->parent = (UIWidget*)w;
+	}
 	// int count  = 0;
 	// while (widgets[count]) {
 	// 	count++;
@@ -311,10 +315,11 @@ void ui_window_close(UIWindow* w) {
 	puglFreeView(w->view);
 }
 
-void ui_window_draw(UIWindow* w, UIContext* c) {
-	w->draw_begin(w, c);
-	ui_window_draw_widgets(w, c);
-	w->draw_end(w, c);
+void ui_window_draw(UIWidget* w, UIContext* c) {
+	UIWindow* window = (UIWindow*)w;
+	window->draw_begin(window, c);
+	ui_window_draw_widgets(window, c);
+	window->draw_end(window, c);
 }
 
 void ui_window_draw_begin(UIWindow* w, UIContext* c) {
@@ -323,7 +328,7 @@ void ui_window_draw_begin(UIWindow* w, UIContext* c) {
 
 void ui_window_draw_end(UIWindow* w, UIContext* c) {
 	// DEBUG
-	return;
+	//return;
 	if (w->hovered_widget) {
 		UIWidget* widget = w->hovered_widget;
 		ui_draw_rectangle(c, &(UIRectangleProperties){
@@ -335,15 +340,15 @@ void ui_window_draw_end(UIWindow* w, UIContext* c) {
 }
 
 void ui_window_draw_widgets(UIWindow* w, UIContext* c) {
-	for (int i = 0; i < w->widgets_count; i++) {
-		UIWidget* widget = w->widgets[i];
+	for (int i = 0; i < w->children_count; i++) {
+		UIWidget* widget = w->children[i];
 		ui_widget_draw(widget, c); // Don't use widget->draw!
 	}
 }
 
 void ui_window_mouse_down(UIWindow* w, UIPosition client, UIMouseButtons b) {
 	if (w->hovered_widget) {
-		flag_on(w->state, WINDOW_STATE_GRABBED);
+		flag_on(w->state, WIDGET_STATE_CLICKED);
 		ui_widget_mouse_down(w->hovered_widget, client, b);
 	}
 }
@@ -371,10 +376,10 @@ void ui_window_mouse_move(UIWindow* w, UIPosition client) {
 	const int client_y = client.y;
 	UIPosition position = {client_x, client_y};
 
-	if (is_flag(w->state, WINDOW_STATE_HOVERED)) {
+	if (is_flag(w->state, WIDGET_STATE_HOVERED)) {
 		UIWidget* focused = NULL;
-		for (int i = 0; i < w->widgets_count; i++) {
-			UIWidget* widget = w->widgets[i];
+		for (int i = 0; i < w->children_count; i++) {
+			UIWidget* widget = w->children[i];
 			ui_window_find_hovered_widget(&focused, widget, &position);
 		}
 		if (focused && focused != w->hovered_widget) {
@@ -395,7 +400,7 @@ void ui_window_mouse_move(UIWindow* w, UIPosition client) {
 }
 
 void ui_window_mouse_up(UIWindow* w, UIPosition p, UIMouseButtons b, double t) {
-	flag_off(w->state, WINDOW_STATE_GRABBED);
+	flag_off(w->state, WIDGET_STATE_CLICKED);
 	if (w->hovered_widget) {
 		UIWidget* widget = w->hovered_widget;
 		if (t - mouse_click_time <= UI_DOUBLE_CLICK_TIME) {

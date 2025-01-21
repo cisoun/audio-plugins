@@ -67,14 +67,9 @@ typedef enum {
 	WIDGET_LIST,
 	WIDGET_KNOB,
 	WIDGET_TEXT,
-	WIDGET_WAVEFORM
+	WIDGET_WAVEFORM,
+	WIDGET_WINDOW
 } UIWidgetTypes;
-
-typedef enum {
-	WINDOW_STATE_IDLE    = 0,
-	WINDOW_STATE_HOVERED = 1 << 0,
-	WINDOW_STATE_GRABBED = 1 << 1
-} UIWindowStates;
 
 typedef struct UIWindow UIWindow;
 typedef struct UIWidget UIWidget;
@@ -101,6 +96,13 @@ typedef struct {
 	int x;
 	int y;
 } UIPosition;
+
+typedef struct {
+	int x1;
+	int y1;
+	int x2;
+	int y2;
+} UIRegion;
 
 typedef struct {
 	float width;
@@ -183,17 +185,13 @@ struct UIWidget {
 };
 
 struct UIWindow {
+	WIDGET
 	UIApp*         app;
 	UIWidget*      hovered_widget;
 	bool           resizable;
 	float          scale;
-	UISize         size;
-	UIWindowStates state;
 	char*          title;
 	PuglView*      view;
-	UIWidget**     widgets;
-	int            widgets_count;
-	void           (*draw)           (UIWindow*, UIContext*);
 	void           (*draw_begin)     (UIWindow*, UIContext*); \
 	void           (*draw_end)       (UIWindow*, UIContext*); \
 	void           (*on_close)       (UIWindow*);
@@ -229,17 +227,17 @@ void      ui_widget_on_scroll       (UIWidget*, UIDirections, float, float);
 UIWindow* ui_window                 (UIWindow*, UIApp*);
 void      ui_window_attach          (UIWindow*, UIWidget**);
 void      ui_window_close           (UIWindow*);
+void      ui_window_draw            (UIWidget*, UIContext*);
 void      ui_window_draw_begin      (UIWindow*, UIContext*);
-void      ui_window_draw            (UIWindow*, UIContext*);
 void      ui_window_draw_end        (UIWindow*, UIContext*);
 void      ui_window_draw_widgets    (UIWindow*, UIContext*);
-void      ui_window_on_close        (UIWindow*);
-void      ui_window_on_key_down     (UIWindow*);
 void      ui_window_mouse_down      (UIWindow*, UIPosition, UIMouseButtons);
-void      ui_window_on_mouse_enter  (UIWindow*);
-void      ui_window_on_mouse_leave  (UIWindow*);
 void      ui_window_mouse_move      (UIWindow*, UIPosition);
 void      ui_window_mouse_up        (UIWindow*, UIPosition, UIMouseButtons, double);
+void      ui_window_on_close        (UIWindow*);
+void      ui_window_on_key_down     (UIWindow*);
+void      ui_window_on_mouse_enter  (UIWindow*);
+void      ui_window_on_mouse_leave  (UIWindow*);
 void      ui_window_show            (UIWindow*);
 
 #endif

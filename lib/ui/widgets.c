@@ -58,7 +58,7 @@ void ui_button_draw(UIWidget* w, UIContext* c) {
 }
 
 void ui_button_mouse_up(UIWidget* w, UIPosition client, UIMouseButtons b) {
-	if (b == MOUSE_BUTTON_LEFT && has_flag(w->state, WINDOW_STATE_HOVERED)) {
+	if (b == MOUSE_BUTTON_LEFT && has_flag(w->state, WIDGET_STATE_HOVERED)) {
 		if (w->click) {
 			w->click(w);
 		}
