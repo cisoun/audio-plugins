@@ -273,8 +273,10 @@ void ui_widget_mouse_up(UIWidget* w, UIPosition p, UIMouseButtons b) {
 	}
 }
 
-void ui_widget_on_scroll(UIWidget* w, UIDirections d, float dx, float dy) {
-	w->scroll(w, d, dx, dx);
+void ui_widget_scroll(UIWidget* w, UIDirections d, float dx, float dy) {
+	if (w->scroll) {
+		w->scroll(w, d, dx, dx);
+	}
 }
 
 UIWindow* ui_window(UIWindow* w, UIApp* a) {

@@ -192,8 +192,8 @@ struct UIWindow {
 	float          scale;
 	char*          title;
 	PuglView*      view;
-	void           (*draw_begin)     (UIWindow*, UIContext*); \
-	void           (*draw_end)       (UIWindow*, UIContext*); \
+	void           (*draw_begin)     (UIWindow*, UIContext*);
+	void           (*draw_end)       (UIWindow*, UIContext*);
 	void           (*on_close)       (UIWindow*);
 	void           (*on_key_down)    (UIWindow*, int);
 	void           (*on_mouse_enter) (UIWindow*);
@@ -222,7 +222,7 @@ void      ui_widget_mouse_leave     (UIWidget*);
 void      ui_widget_mouse_down      (UIWidget*, UIPosition, UIMouseButtons);
 void      ui_widget_mouse_move      (UIWidget*, UIPosition);
 void      ui_widget_mouse_up        (UIWidget*, UIPosition, UIMouseButtons);
-void      ui_widget_on_scroll       (UIWidget*, UIDirections, float, float);
+void      ui_widget_scroll          (UIWidget*, UIDirections, float, float);
 
 UIWindow* ui_window                 (UIWindow*, UIApp*);
 void      ui_window_attach          (UIWindow*, UIWidget**);
