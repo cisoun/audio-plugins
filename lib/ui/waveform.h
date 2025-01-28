@@ -8,7 +8,9 @@ typedef struct{
 	KitAudio* audio;
 } UIWaveform;
 
-UIWidget* ui_waveform      (UIWaveform*);
-void      ui_waveform_draw (UIWidget*, UIContext* c);
+UIWidget* ui_waveform           (UIWaveform*);
+void      ui_waveform_draw      (UIWidget*, UIContext*);
+void      ui_waveform_set_audio (UIWidget*, KitAudio*);
+
 
 #endif

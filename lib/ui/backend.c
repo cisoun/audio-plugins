@@ -2,6 +2,7 @@
 #include "colors.h"
 #include "file-dialog.h"
 #include "widgets.h"
+#include <limits.h>
 #include <stdio.h>
 
 static double mouse_click_time;
@@ -68,13 +69,25 @@ static PuglStatus handle_event(PuglView* view, const PuglEvent* event)
 		case PUGL_KEY_PRESS:      handle_key_down(window, event); break;
 		case PUGL_REALIZE:        break;
 		case PUGL_UPDATE:
-			puglPostRedisplay(view);
-			//puglPostRedisplayRect(view, (PuglRect){20, 30, 40, 50});
+			if (window->is_dirty) {
+				//puglPostRedisplay(view); break;
+				const PuglRect rect = {
+					window->scale * window->dirty_area.x1,
+					window->scale * window->dirty_area.y1,
+					window->scale * (window->dirty_area.x2 - window->dirty_area.x1),
+					window->scale * (window->dirty_area.y2 - window->dirty_area.y1),
+				};
+				puglPostRedisplayRect(view, rect);
+			}
 			break;
 		case PUGL_EXPOSE: {
-			UIContext* context = (UIContext*)puglGetContext(view);
-			window->draw((UIWidget*)window, context);
-			break;
+			if (!window->is_dirty) {
+				break;
+			}
+			const PuglExposeEvent* e = &event->expose;
+			UIContext* context       = (UIContext*)puglGetContext(view);
+			//ui_window_draw((UIWidget*)window, context); break;
+			ui_window_draw_area((UIWidget*)window, context, window->dirty_area); break;
 		}
 		case PUGL_CLOSE:
 			window->on_close(window);
@@ -102,8 +115,17 @@ void ui_app_destroy(UIApp* a) {
 
 void ui_app_run(UIApp* a) {
 	while (!a->quit) {
-		puglUpdate(a->world, 1 / 60.0);
+		puglUpdate(a->world, -1); //1.0 / FPS);
 	}
+}
+
+inline UIArea ui_area_add(UIArea* a, UIArea* b) {
+	return (UIArea){
+		min(a->x1, b->x1),
+		min(a->y1, b->y1),
+		max(a->x2, b->x2),
+		max(a->y2, b->y2)
+	};
 }
 
 void ui_draw_arc(UIContext* c, UIArcProperties* p) {
@@ -213,7 +235,7 @@ void ui_draw_text(UIContext* c, UITextProperties* p) {
 }
 
 inline void ui_widget_disable(UIWidget* w) {
-	flag_on(w->state, WIDGET_STATE_DISABLED);
+	ui_widget_set_state(w, WIDGET_STATE_DISABLED);
 }
 
 void ui_widget_double_click(UIWidget* w) {
@@ -230,34 +252,68 @@ void ui_widget_draw(UIWidget* w, UIContext* c) {
 	w->draw(w, c);
 	for (int i = 0; i < w->children_count; i++) {
 		UIWidget* widget = w->children[i];
-		widget->draw(widget, c);
+		ui_widget_draw(widget, c);
 	}
 }
 
-inline void ui_widget_enable(UIWidget* w) {
-	flag_off(w->state, WIDGET_STATE_DISABLED);
+void ui_widget_draw_area(UIWidget* w, UIContext* c, UIArea r) {
+	//cairo_rectangle(c, r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1);
+	//cairo_clip(c);
+	ui_widget_draw(w, c);
+	//cairo_reset_clip(c);
 }
 
-static bool ui_widget_intersect(UIWidget* w, int x, int y) {
-	return x >= w->position.x &&
-	       x < w->position.x + w->size.width &&
-	       y >= w->position.y &&
-	       y < w->position.y + w->size.height;
+inline void ui_widget_enable(UIWidget* w) {
+	ui_widget_unset_state(w, WIDGET_STATE_DISABLED);
+}
+
+inline UIArea ui_widget_get_area(UIWidget* w) {
+	return (UIArea){
+		w->position.x,
+		w->position.y,
+		w->position.x + w->size.width,
+		w->position.y + w->size.height
+	};
+}
+
+UIWindow* ui_widget_get_window(UIWidget* w) {
+	UIWidget* widget = w;
+	while (widget && widget->type != WIDGET_WINDOW) {
+		widget = widget->parent;
+	}
+	return (UIWindow*)widget;
+}
+
+static bool ui_widget_intersect_position(UIWidget* w, UIPosition* p) {
+	return p->x >= w->position.x &&
+	       p->x < w->position.x + w->size.width &&
+	       p->y >= w->position.y &&
+	       p->y < w->position.y + w->size.height;
+}
+
+static bool ui_widget_intersect_area(UIWidget* w, UIArea* a) {
+	if (w->position.x > a->x2 || a->x1 > w->position.x + w->size.width) {
+		return false;
+	}
+	if (w->position.y > a->y2 || a->y1 > w->position.y + w->size.height) {
+		return false;
+	}
+	return true;
 }
 
 void ui_widget_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b) {
-	flag_on(w->state, WIDGET_STATE_CLICKED);
+	ui_widget_set_state(w, WIDGET_STATE_CLICKED);
 	if (w->mouse_down) {
 		w->mouse_down(w, (UIPosition){p.x - w->position.x, p.y - w->position.y}, b);
 	}
 }
 
 void ui_widget_mouse_enter(UIWidget* w) {
-	flag_on(w->state, WIDGET_STATE_HOVERED);
+	ui_widget_set_state(w, WIDGET_STATE_HOVERED);
 }
 
 void ui_widget_mouse_leave(UIWidget* w) {
-	flag_off(w->state, WIDGET_STATE_HOVERED);
+	ui_widget_unset_state(w, WIDGET_STATE_HOVERED);
 }
 
 void ui_widget_mouse_move(UIWidget* w, UIPosition p) {
@@ -267,10 +323,21 @@ void ui_widget_mouse_move(UIWidget* w, UIPosition p) {
 }
 
 void ui_widget_mouse_up(UIWidget* w, UIPosition p, UIMouseButtons b) {
-	flag_off(w->state, WIDGET_STATE_CLICKED);
+	ui_widget_unset_state(w, WIDGET_STATE_CLICKED);
 	if (w->mouse_up) {
 		w->mouse_up(w, (UIPosition){p.x - w->position.x, p.y - w->position.y}, b);
 	}
+}
+
+void ui_widget_must_redraw(UIWidget* w) {
+	UIWindow* window = ui_widget_get_window(w);
+	if (window == NULL) {
+		return;
+	}
+	UIArea widget_area = ui_widget_get_area(w);
+	UIArea dirty_area  = ui_area_add(&widget_area, &window->dirty_area);
+	window->is_dirty   = true;
+	memcpy(&window->dirty_area, &dirty_area, sizeof(UIArea));
 }
 
 void ui_widget_scroll(UIWidget* w, UIDirections d, float dx, float dy) {
@@ -279,7 +346,22 @@ void ui_widget_scroll(UIWidget* w, UIDirections d, float dx, float dy) {
 	}
 }
 
+void ui_widget_set_state(UIWidget* w, UIWidgetStates s) {
+	flag_on(w->state, s);
+	if (w->state_change) {
+		w->state_change(w, s);
+	}
+}
+
+void ui_widget_unset_state(UIWidget* w, UIWidgetStates s) {
+	flag_off(w->state, s);
+	if (w->state_change) {
+		w->state_change(w, s);
+	}
+}
+
 UIWindow* ui_window(UIWindow* w, UIApp* a) {
+	UIWindow* window = new(UIWindow);
 	PuglView* view = puglNewView(a->world);
 	puglSetViewString(view, PUGL_WINDOW_TITLE, w->title);
 	puglSetSizeHint  (view, PUGL_DEFAULT_SIZE, w->size.width * w->scale, w->size.height * w->scale);
@@ -293,12 +375,17 @@ UIWindow* ui_window(UIWindow* w, UIApp* a) {
 	puglSetViewHint  (view, PUGL_IGNORE_KEY_REPEAT, true);
 	puglSetEventFunc (view, handle_event);
 	set_default      (w->draw,       ui_window_draw);
+	set_default      (w->draw_area,  ui_widget_draw_area);
 	set_default      (w->draw_begin, ui_window_draw_begin);
 	set_default      (w->draw_end,   ui_window_draw_end);
 	ui_window_attach (w, w->children);
-	w->app  = a;
-	w->view = view;
-	return w;
+	w->app        = a;
+	w->dirty_area = (UIArea){0, 0, w->size.width, w->size.height};
+	w->is_dirty   = true;
+	w->type       = WIDGET_WINDOW;
+	w->view       = view;
+	memcpy(window, w, sizeof(UIWindow));
+	return window;
 }
 
 void ui_window_attach(UIWindow* w, UIWidget** widgets) {
@@ -306,11 +393,6 @@ void ui_window_attach(UIWindow* w, UIWidget** widgets) {
 	for (int i = 0; i < w->children_count; i++) {
 		w->children[i]->parent = (UIWidget*)w;
 	}
-	// int count  = 0;
-	// while (widgets[count]) {
-	// 	count++;
-	// }
-	// w->widgets_count = count - 1;
 }
 
 void ui_window_close(UIWindow* w) {
@@ -319,9 +401,42 @@ void ui_window_close(UIWindow* w) {
 
 void ui_window_draw(UIWidget* w, UIContext* c) {
 	UIWindow* window = (UIWindow*)w;
-	window->draw_begin(window, c);
-	ui_window_draw_widgets(window, c);
-	window->draw_end(window, c);
+	ui_window_draw_begin(window, c);
+	if (window->draw) {
+		window->draw((UIWidget*)window, c);
+	}
+	for (int i = 0; i < w->children_count; i++) {
+		UIWidget* widget = w->children[i];
+		ui_widget_draw(widget, c);
+	}
+	ui_window_draw_end(window, c);
+}
+
+void ui_window_draw_area(UIWidget* w, UIContext* c, UIArea a) {
+	UIWindow* window = (UIWindow*)w;
+	ui_window_draw_begin(window, c);
+
+	cairo_rectangle(c, a.x1, a.y1, a.x2 - a.x1, a.y2 - a.y1);
+	cairo_clip(c);
+
+	if (window->draw) {
+		window->draw((UIWidget*)window, c);
+	}
+	for (int i = 0; i < w->children_count; i++) {
+		UIWidget* widget = w->children[i];
+		if (ui_widget_intersect_area(widget, &a)) {
+			ui_widget_draw(widget, c);
+		}
+	}
+
+	cairo_reset_clip(c);
+
+	ui_window_draw_end(window, c);
+	window->is_dirty      = false;
+	window->dirty_area.x1 = w->size.width;
+	window->dirty_area.y1 = w->size.height;
+	window->dirty_area.x2 = 0;
+	window->dirty_area.y2 = 0;
 }
 
 void ui_window_draw_begin(UIWindow* w, UIContext* c) {
@@ -339,12 +454,15 @@ void ui_window_draw_end(UIWindow* w, UIContext* c) {
 			.stroke   = {.color = {1, 0, 0, 1}, .width = 2}
 		});
 	}
-}
-
-void ui_window_draw_widgets(UIWindow* w, UIContext* c) {
-	for (int i = 0; i < w->children_count; i++) {
-		UIWidget* widget = w->children[i];
-		ui_widget_draw(widget, c); // Don't use widget->draw!
+	if (w->is_dirty) {
+		ui_draw_rectangle(c, &(UIRectangleProperties){
+			.position = {w->dirty_area.x1, w->dirty_area.y1},
+			.size     = {
+				w->dirty_area.x2 - w->dirty_area.x1,
+				w->dirty_area.y2 - w->dirty_area.y1
+			},
+			.stroke   = {.color = {0, 1, 0, 1}, .width = 1}
+		});
 	}
 }
 
@@ -362,7 +480,7 @@ static void ui_window_find_hovered_widget(UIWidget** focused, UIWidget* widget, 
 	) {
 		return;
 	}
-	if (ui_widget_intersect(widget, p->x, p->y)) {
+	if (ui_widget_intersect_position(widget, p)) {
 		*focused = widget;
 	}
 	if (widget->children_count > 0) {

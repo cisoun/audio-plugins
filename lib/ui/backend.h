@@ -14,7 +14,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define FPS 60
+
 #define UIContext cairo_t
+#define UISurface cairo_surface_t
+
 #define UIApp(...) ui_app(&(UIApp)__VA_ARGS__)
 
 #define clamp(a, b, c) min(max(a, b), c)
@@ -86,6 +90,13 @@ typedef struct {
 } UIAngle;
 
 typedef struct {
+	unsigned short x1;
+	unsigned short y1;
+	unsigned short x2;
+	unsigned short y2;
+} UIArea;
+
+typedef struct {
 	float r;
 	float g;
 	float b;
@@ -98,15 +109,8 @@ typedef struct {
 } UIPosition;
 
 typedef struct {
-	int x1;
-	int y1;
-	int x2;
-	int y2;
-} UIRegion;
-
-typedef struct {
-	float width;
-	float height;
+	unsigned short width;
+	unsigned short height;
 } UISize;
 
 typedef struct {
@@ -138,7 +142,7 @@ typedef struct {
 	char*      text;
 	UIColor    color;
 	UIPosition position;
-	double     size;
+	float      size;
 	bool       bold;
 	bool       italic;
 	UIOrigin   origin;
@@ -171,14 +175,17 @@ typedef struct {
 	UIPosition     position; \
 	UISize         size; \
 	UIWidgetStates state; \
+	UISurface      surface; \
 	UIWidgetTypes  type; \
 	void           (*draw)         (UIWidget*, UIContext*); \
+	void           (*draw_area)    (UIWidget*, UIContext*, UIArea); \
 	void           (*click)        (UIWidget*); \
 	void           (*double_click) (UIWidget*); \
 	void           (*mouse_down)   (UIWidget*, UIPosition, UIMouseButtons); \
 	void           (*mouse_move)   (UIWidget*, UIPosition); \
 	void           (*mouse_up)     (UIWidget*, UIPosition, UIMouseButtons); \
-	void           (*scroll)       (UIWidget*, UIDirections, float, float);
+	void           (*scroll)       (UIWidget*, UIDirections, float, float); \
+	void           (*state_change) (UIWidget*, UIWidgetStates);
 
 struct UIWidget {
 	WIDGET
@@ -192,6 +199,8 @@ struct UIWindow {
 	float          scale;
 	char*          title;
 	PuglView*      view;
+	UIArea         dirty_area;
+	bool           is_dirty;
 	void           (*draw_begin)     (UIWindow*, UIContext*);
 	void           (*draw_end)       (UIWindow*, UIContext*);
 	void           (*on_close)       (UIWindow*);
@@ -201,43 +210,51 @@ struct UIWindow {
 	void           (*on_mouse_move)  (UIWindow*, UIPosition);
 };
 
-UIApp*    ui_app                    (UIApp*);
-void      ui_app_destroy            (UIApp*);
-void      ui_app_close              (UIApp*);
-void      ui_app_run                (UIApp*);
+UIApp*     ui_app                    (UIApp*);
+void       ui_app_destroy            (UIApp*);
+void       ui_app_close              (UIApp*);
+void       ui_app_run                (UIApp*);
 
-void      ui_draw_arc               (UIContext*, UIArcProperties*);
-void      ui_draw_circle            (UIContext*, UICircleProperties*);
-void      ui_draw_lines             (UIContext*, UILinesProperties*);
-void      ui_draw_rectangle         (UIContext*, UIRectangleProperties*);
-void      ui_draw_rounded_rectangle (UIContext*, UIRoundedRectangleProperties*);
-void      ui_draw_text              (UIContext*, UITextProperties*);
+UIArea     ui_area_add               (UIArea*, UIArea*);
 
-void      ui_widget_double_click    (UIWidget*);
-void      ui_widget_disable         (UIWidget*);
-void      ui_widget_draw            (UIWidget*, UIContext*);
-void      ui_widget_enable          (UIWidget*);
-void      ui_widget_mouse_enter     (UIWidget*);
-void      ui_widget_mouse_leave     (UIWidget*);
-void      ui_widget_mouse_down      (UIWidget*, UIPosition, UIMouseButtons);
-void      ui_widget_mouse_move      (UIWidget*, UIPosition);
-void      ui_widget_mouse_up        (UIWidget*, UIPosition, UIMouseButtons);
-void      ui_widget_scroll          (UIWidget*, UIDirections, float, float);
+void       ui_draw_arc               (UIContext*, UIArcProperties*);
+void       ui_draw_circle            (UIContext*, UICircleProperties*);
+void       ui_draw_lines             (UIContext*, UILinesProperties*);
+void       ui_draw_rectangle         (UIContext*, UIRectangleProperties*);
+void       ui_draw_rounded_rectangle (UIContext*, UIRoundedRectangleProperties*);
+void       ui_draw_text              (UIContext*, UITextProperties*);
 
-UIWindow* ui_window                 (UIWindow*, UIApp*);
-void      ui_window_attach          (UIWindow*, UIWidget**);
-void      ui_window_close           (UIWindow*);
-void      ui_window_draw            (UIWidget*, UIContext*);
-void      ui_window_draw_begin      (UIWindow*, UIContext*);
-void      ui_window_draw_end        (UIWindow*, UIContext*);
-void      ui_window_draw_widgets    (UIWindow*, UIContext*);
-void      ui_window_mouse_down      (UIWindow*, UIPosition, UIMouseButtons);
-void      ui_window_mouse_move      (UIWindow*, UIPosition);
-void      ui_window_mouse_up        (UIWindow*, UIPosition, UIMouseButtons, double);
-void      ui_window_on_close        (UIWindow*);
-void      ui_window_on_key_down     (UIWindow*);
-void      ui_window_on_mouse_enter  (UIWindow*);
-void      ui_window_on_mouse_leave  (UIWindow*);
-void      ui_window_show            (UIWindow*);
+void       ui_widget_disable         (UIWidget*);
+void       ui_widget_double_click    (UIWidget*);
+void       ui_widget_draw            (UIWidget*, UIContext*);
+void       ui_widget_draw_area       (UIWidget*, UIContext*, UIArea);
+void       ui_widget_enable          (UIWidget*);
+UIArea     ui_widget_get_area        (UIWidget*);
+UIWindow*  ui_widget_get_window      (UIWidget*);
+void       ui_widget_mouse_down      (UIWidget*, UIPosition, UIMouseButtons);
+void       ui_widget_mouse_enter     (UIWidget*);
+void       ui_widget_mouse_leave     (UIWidget*);
+void       ui_widget_mouse_move      (UIWidget*, UIPosition);
+void       ui_widget_mouse_up        (UIWidget*, UIPosition, UIMouseButtons);
+void       ui_widget_must_redraw     (UIWidget*);
+void       ui_widget_scroll          (UIWidget*, UIDirections, float, float);
+void       ui_widget_set_state       (UIWidget*, UIWidgetStates);
+void       ui_widget_unset_state     (UIWidget*, UIWidgetStates);
+
+UIWindow*  ui_window                 (UIWindow*, UIApp*);
+void       ui_window_attach          (UIWindow*, UIWidget**);
+void       ui_window_close           (UIWindow*);
+void       ui_window_draw            (UIWidget*, UIContext*);
+void       ui_window_draw_area       (UIWidget*, UIContext*, UIArea);
+void       ui_window_draw_begin      (UIWindow*, UIContext*);
+void       ui_window_draw_end        (UIWindow*, UIContext*);
+void       ui_window_mouse_down      (UIWindow*, UIPosition, UIMouseButtons);
+void       ui_window_mouse_move      (UIWindow*, UIPosition);
+void       ui_window_mouse_up        (UIWindow*, UIPosition, UIMouseButtons, double);
+void       ui_window_on_close        (UIWindow*);
+void       ui_window_on_key_down     (UIWindow*);
+void       ui_window_on_mouse_enter  (UIWindow*);
+void       ui_window_on_mouse_leave  (UIWindow*);
+void       ui_window_show            (UIWindow*);
 
 #endif

@@ -7,6 +7,7 @@
 #include "lib/ui/waveform.h"
 #include "lib/ui/widgets.h"
 #include "ui/ui.h"
+#include <fftw3.h>
 
 UIColor* COLOR_DARK       = COLOR_ROSADE;
 UIColor* COLOR_PRIMARY    = COLOR_YELLOW;
@@ -29,7 +30,6 @@ UIWidget*    dialog;
 UIWindow*    window;
 KitAudio*    audio;
 
-void (*window_draw)     (UIWidget*, UIContext*);
 void (*knob_mouse_move) (UIWidget*, UIPosition);
 
 static void on_button_click(UIWidget* w) {
@@ -53,8 +53,7 @@ static void on_dialog_close(UIWidget* w, KitFileInfo* kfi) {
 		tf->text       = file->name;
 		char* path     = kit_string_join3(kfi->path, PATH_SEPARATOR, kfi->name);
 		audio          = kit_audio_from(path);
-		UIWaveform* wf = (UIWaveform*)waveform;
-		wf->audio      = audio;
+		ui_waveform_set_audio(waveform, audio);
 		destroy(path);
 	}
 }
@@ -73,21 +72,18 @@ static void on_mouse_move(UIWindow* w, UIPosition client) {
 }
 
 static void on_window_draw(UIWidget* widget, UIContext* c) {
+	printf("on_window_draw\n");
 	UIWindow* w = (UIWindow*)widget;
-	ui_window_draw_begin(w, c);
-
 	ui_draw_rectangle(c, &(UIRectangleProperties){
 		.color    = COLOR_DARK[0],
 		.size     = w->size,
 	});
-
 	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
 		.color    = COLOR_DARK[1],
 		.position = {10, 40},
 		.radius   = 6,
 		.size     = {w->size.width - 20, 45},
 	});
-
 	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
 		.color    = COLOR_DARK[0],
 		.position = {10, 40 + 45 + 10},
@@ -98,17 +94,12 @@ static void on_window_draw(UIWidget* widget, UIContext* c) {
 			.color = COLOR_DARK[3]
 		}
 	});
-
 	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
 		.color    = COLOR_DARK[1],
 		.position = {10, w->size.height - 10 - 90},
 		.radius   = 6,
 		.size     = {w->size.width - 20, 90},
 	});
-
-	ui_window_draw_widgets(w, c);
-
-	ui_window_draw_end(w, c);
 }
 
 int main(int argc, char** argv) {
@@ -194,7 +185,9 @@ int main(int argc, char** argv) {
 		.size    = {500, 300}
 	});
 
+
 	UIWindow* window = ui_window(&(UIWindow){
+		.draw          = on_window_draw,
 		.on_close      = on_close,
 		.on_key_down   = on_key_down,
 		.on_mouse_move = on_mouse_move,
@@ -217,14 +210,13 @@ int main(int argc, char** argv) {
 		.children_count = 11
 	}, app);
 
-	window_draw  = window->draw;
-	window->draw = on_window_draw;
-
 	ui_window_show         (window);
 
 	ui_app_run             (app);
 
 	ui_window_close        (window);
+
+	destroy(window);
 
 	if (file != NULL) {
 		kit_file_info_destroy(file);

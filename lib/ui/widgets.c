@@ -7,11 +7,12 @@ static int knob_last_y = 0;
 static inline int ui_list_get_selection_at_position(UIWidget*, UIPosition);
 
 UIWidget* ui_button(UIButton* b) {
-	set_default(b->color,       COLOR_PRIMARY);
-	set_default(b->size.height, 20);
-	set_default(b->size.width,  80);
-	set_default(b->draw,        ui_button_draw);
-	set_default(b->mouse_up,    ui_button_mouse_up);
+	set_default(b->color,        COLOR_PRIMARY);
+	set_default(b->size.height,  20);
+	set_default(b->size.width,   80);
+	set_default(b->draw,         ui_button_draw);
+	set_default(b->mouse_up,     ui_button_mouse_up);
+	set_default(b->state_change, ui_button_state_change);
 	b->type = WIDGET_BUTTON;
 	return (UIWidget*)b;
 }
@@ -29,8 +30,8 @@ inline void ui_button_destroy(UIButton* w) {
 
 void ui_button_draw(UIWidget* w, UIContext* c) {
 	UIButton* b  = (UIButton*)w;
-	bool hovered = has_flag(w->state, WIDGET_STATE_HOVERED);
-	bool enabled = !has_flag(w->state, WIDGET_STATE_DISABLED);
+	bool hovered = has_flag(w->state, WIDGET_STATE_HOVERED)  == true;
+	bool enabled = has_flag(w->state, WIDGET_STATE_DISABLED) == false;
 	UITextProperties tp = {
 		.text  = b->text,
 		.color = b->color[enabled ? 9 : 4],
@@ -63,6 +64,11 @@ void ui_button_mouse_up(UIWidget* w, UIPosition client, UIMouseButtons b) {
 			w->click(w);
 		}
 	}
+}
+
+void ui_button_state_change(UIWidget* w, UIWidgetStates s) {
+	printf("STATE CHANGE: %d\n", s);
+	ui_widget_must_redraw(w);
 }
 
 UIWidget* ui_file_list(UIFileList* l) {
@@ -284,6 +290,7 @@ void ui_knob_scroll(UIWidget* w, UIDirections direction, float dx, float dy) {
 void ui_knob_set_value(UIWidget* w, float value) {
 	UIKnob* k = (UIKnob*)w;
 	k->value  = clamp(value, 0.0, 1.0);
+	ui_widget_must_redraw(w);
 }
 
 UIWidget* ui_list (UIList* l) {
@@ -342,6 +349,7 @@ void ui_list_scroll(UIWidget* w, UIDirections direction, const float dx, const f
 	}
 	const int min = -(l->items->count * UI_LIST_ITEM_HEIGHT - w->size.height);
 	l->offset_y   = clamp(l->offset_y + dy, min, 0);
+	ui_widget_must_redraw(w);
 }
 
 void ui_list_select(UIWidget* w, int index) {
@@ -350,6 +358,7 @@ void ui_list_select(UIWidget* w, int index) {
 	if (l->selection_change) {
 		l->selection_change(w, l->selected_index);
 	}
+	ui_widget_must_redraw(w);
 }
 
 UIWidget* ui_text(UIText* t) {
@@ -370,6 +379,9 @@ UIWidget* ui_text_new() {
 }
 
 void ui_text_destroy(UIText* t) {
+	if (t->text != NULL) {
+		destroy(t->text);
+	}
 	destroy(t);
 }
 
@@ -394,4 +406,13 @@ UISize ui_text_get_size(UIContext* c, UITextProperties* p) {
 		.width  = te.width,
 		.height = te.height
 	};
+}
+
+void ui_text_set_text(UIWidget* w, char* s) {
+	UIText* t = (UIText*)w;
+	if (t->text != NULL) {
+		destroy(t->text);
+	}
+	t->text = kit_string_clone(s);
+	ui_widget_must_redraw(w);
 }

@@ -56,6 +56,7 @@ void         ui_button_destroy          (UIButton*);
 void         ui_button_draw             (UIWidget*, UIContext*);
 void         ui_button_mouse_up         (UIWidget*, UIPosition, UIMouseButtons);
 UIButton*    ui_button_new              (void);
+void         ui_button_state_change     (UIWidget*, UIWidgetStates);
 
 UIWidget*    ui_file_list               (UIFileList*);
 void         ui_file_list_clear         (UIWidget*);
@@ -87,6 +88,6 @@ UIWidget*    ui_text_from               (UIText*);
 void         ui_text_destroy            (UIText*);
 void         ui_text_draw               (UIWidget*, UIContext*);
 UISize       ui_text_get_size           (UIContext*, UITextProperties*);
-
+void         ui_text_set_text           (UIWidget*, char*);
 
 #endif

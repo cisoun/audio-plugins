@@ -114,7 +114,8 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 }
 
 inline void ui_file_dialog_close(UIWidget* w) {
-	flag_on(w->state, WIDGET_STATE_HIDDEN);
+	ui_widget_set_state(w, WIDGET_STATE_HIDDEN);
+	ui_widget_must_redraw(w);
 }
 
 void ui_file_dialog_destroy(UIWidget* w) {
@@ -125,6 +126,7 @@ void ui_file_dialog_destroy(UIWidget* w) {
 	ui_file_list_destroy(fd->list);
 	ui_button_destroy(fd->buttonOK);
 	ui_button_destroy(fd->buttonCancel);
+	ui_text_destroy(fd->text);
 	destroy(fd->children);
 	destroy(fd->path);
 	destroy(fd);
@@ -178,11 +180,12 @@ void ui_file_dialog_scan(UIFileDialog* fd, const char* path) {
 		fd->path                 = new_path;
 		fd->list->items          = fd->files;
 		fd->list->offset_y       = 0;
-		fd->text->text           = fd->path;
+		ui_text_set_text((UIWidget*)fd->text, fd->path);
 		ui_list_select((UIWidget*)fd->list, -1);
 	}
 }
 
 void ui_file_dialog_show(UIWidget* w) {
-	flag_off(w->state, WIDGET_STATE_HIDDEN);
+	ui_widget_unset_state(w, WIDGET_STATE_HIDDEN);
+	ui_widget_must_redraw(w);
 }
