@@ -227,6 +227,7 @@ int main(int argc, char** argv) {
 	}
 
 	ui_file_dialog_destroy (dialog);
+	ui_waveform_destroy    ((UIWaveform*)waveform);
 	ui_app_destroy         (app);
 
 	return 0;

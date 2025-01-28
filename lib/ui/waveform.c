@@ -3,43 +3,67 @@
 #include "waveform.h"
 #include <math.h>
 
+static void ui_waveform_generate_waveform(UIWaveform*);
+
 UIWidget* ui_waveform(UIWaveform* wf) {
-	wf->draw = ui_waveform_draw;
-	wf->type = WIDGET_WAVEFORM;
-	return (UIWidget*)wf;
+	UIWaveform* waveform = new(UIWaveform);
+	memcpy(waveform, wf, sizeof(UIWaveform));
+	waveform->draw = ui_waveform_draw;
+	waveform->type = WIDGET_WAVEFORM;
+	return (UIWidget*)waveform;
+}
+
+void ui_waveform_destroy(UIWaveform* wf) {
+	ui_surface_destroy(wf->surface);
+	if (wf != NULL) {
+		destroy(wf);
+	}
 }
 
 void ui_waveform_draw(UIWidget* w, UIContext* c) {
-	UIWaveform* wf    = (UIWaveform*)w;
-	KitAudio*   audio = wf->audio;
-	if (audio == NULL) {
+	if (w->surface != NULL) {
+		cairo_set_source_surface(c, w->surface, w->position.x, w->position.y);
+		cairo_paint(c);
+	}
+}
+
+static void ui_waveform_generate_waveform(UIWaveform* wf) {
+	if (wf->audio == NULL) {
 		return;
 	}
-	//int delta            = wf->audio->samples / w->size.width;
-	int channels         = wf->audio->channels;
-	float channel_height = w->size.height / channels;
+
+	KitAudio*  audio          = wf->audio;
+	int        channels       = wf->audio->channels;
+	float      channel_height = wf->size.height / channels;
+
+	UISurface* surface = ui_surface(&wf->size);
+	UIContext* context = ui_surface_draw_begin(surface);
+
 	for (int i = 0; i < channels; i++) {
-		int x = w->position.x;
-		int y = w->position.y + i * channel_height + channel_height / 2;
-		cairo_save(c);
-		cairo_new_path(c);
-		cairo_move_to(c, x, y);
+		int x = 0;
+		int y = i * channel_height + channel_height / 2;
+		cairo_new_path(context);
+		cairo_move_to(context, x, y);
 		for (long int j = 0; j < audio->samples; j++) {
 			float value = kit_audio_get_sample(audio, i, j);
-			cairo_line_to(c,
-				x + (float)w->size.width / audio->samples * j,
+			cairo_line_to(context,
+				x + (float)wf->size.width / audio->samples * j,
 				y - channel_height / 2 * value
 			);
 		}
-		cairo_set_line_width(c, 1);
-		cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[9]));
-		cairo_stroke(c);
-		cairo_restore(c);
+		cairo_set_line_width(context, 1);
+		cairo_set_source_rgba(context, ui_color_to_cairo(COLOR_DARK[9]));
+		cairo_stroke(context);
 	}
+
+	ui_surface_draw_end(surface, context);
+
+	ui_widget_set_surface((UIWidget*)wf, surface);
 }
 
 void ui_waveform_set_audio(UIWidget* w, KitAudio* a) {
 	UIWaveform* wf = (UIWaveform*)w;
-	wf->audio = a;
+	wf->audio      = a;
+	ui_waveform_generate_waveform(wf);
 	ui_widget_must_redraw(w);
 }

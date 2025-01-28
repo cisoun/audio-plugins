@@ -84,7 +84,6 @@ static PuglStatus handle_event(PuglView* view, const PuglEvent* event)
 			if (!window->is_dirty) {
 				break;
 			}
-			const PuglExposeEvent* e = &event->expose;
 			UIContext* context       = (UIContext*)puglGetContext(view);
 			//ui_window_draw((UIWidget*)window, context); break;
 			ui_window_draw_area((UIWidget*)window, context, window->dirty_area); break;
@@ -227,11 +226,25 @@ void ui_draw_text(UIContext* c, UITextProperties* p) {
 		default: break;
 	}
 
-	// cairo_set_source_rgba(c, 1,0,0,1);
-	// cairo_rectangle(c, x, y + te.y_bearing, te.width, -te.y_bearing);
-	// cairo_fill(c);
 	cairo_move_to(c, x, y);
 	cairo_show_text(c, p->text);
+}
+
+inline UISurface* ui_surface(UISize* size) {
+	return cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size->width, size->height);
+}
+
+inline void ui_surface_destroy(UISurface* s) {
+	cairo_surface_destroy(s);
+}
+
+inline UIContext* ui_surface_draw_begin(UISurface* s) {
+	return cairo_create(s);
+}
+
+inline void ui_surface_draw_end(UISurface* s, UIContext* c) {
+	cairo_surface_flush(s);
+	cairo_destroy(c);
 }
 
 inline void ui_widget_disable(UIWidget* w) {
@@ -257,10 +270,10 @@ void ui_widget_draw(UIWidget* w, UIContext* c) {
 }
 
 void ui_widget_draw_area(UIWidget* w, UIContext* c, UIArea r) {
-	//cairo_rectangle(c, r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1);
-	//cairo_clip(c);
+	cairo_rectangle(c, r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1);
+	cairo_clip(c);
 	ui_widget_draw(w, c);
-	//cairo_reset_clip(c);
+	cairo_reset_clip(c);
 }
 
 inline void ui_widget_enable(UIWidget* w) {
@@ -352,6 +365,14 @@ void ui_widget_set_state(UIWidget* w, UIWidgetStates s) {
 		w->state_change(w, s);
 	}
 }
+
+void ui_widget_set_surface(UIWidget* w, UISurface* s) {
+	if (w->surface != NULL) {
+		ui_surface_destroy(w->surface);
+	}
+	w->surface = s;
+}
+
 
 void ui_widget_unset_state(UIWidget* w, UIWidgetStates s) {
 	flag_off(w->state, s);

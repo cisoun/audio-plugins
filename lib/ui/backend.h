@@ -175,7 +175,7 @@ typedef struct {
 	UIPosition     position; \
 	UISize         size; \
 	UIWidgetStates state; \
-	UISurface      surface; \
+	UISurface*     surface; \
 	UIWidgetTypes  type; \
 	void           (*draw)         (UIWidget*, UIContext*); \
 	void           (*draw_area)    (UIWidget*, UIContext*, UIArea); \
@@ -224,6 +224,11 @@ void       ui_draw_rectangle         (UIContext*, UIRectangleProperties*);
 void       ui_draw_rounded_rectangle (UIContext*, UIRoundedRectangleProperties*);
 void       ui_draw_text              (UIContext*, UITextProperties*);
 
+UISurface* ui_surface                (UISize*);
+UIContext* ui_surface_draw_begin     (UISurface*);
+void       ui_surface_draw_end       (UISurface*, UIContext*);
+void       ui_surface_destroy        (UISurface*);
+
 void       ui_widget_disable         (UIWidget*);
 void       ui_widget_double_click    (UIWidget*);
 void       ui_widget_draw            (UIWidget*, UIContext*);
@@ -239,6 +244,7 @@ void       ui_widget_mouse_up        (UIWidget*, UIPosition, UIMouseButtons);
 void       ui_widget_must_redraw     (UIWidget*);
 void       ui_widget_scroll          (UIWidget*, UIDirections, float, float);
 void       ui_widget_set_state       (UIWidget*, UIWidgetStates);
+void       ui_widget_set_surface     (UIWidget*, UISurface*);
 void       ui_widget_unset_state     (UIWidget*, UIWidgetStates);
 
 UIWindow*  ui_window                 (UIWindow*, UIApp*);
