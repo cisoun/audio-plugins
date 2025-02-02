@@ -178,7 +178,7 @@ typedef struct {
 	UISurface*     surface; \
 	UIWidgetTypes  type; \
 	void           (*draw)         (UIWidget*, UIContext*); \
-	void           (*draw_area)    (UIWidget*, UIContext*, UIArea); \
+	void           (*draw_area)    (UIWidget*, UIContext*, UIArea*); \
 	void           (*click)        (UIWidget*); \
 	void           (*double_click) (UIWidget*); \
 	void           (*mouse_down)   (UIWidget*, UIPosition, UIMouseButtons); \
@@ -232,7 +232,7 @@ void       ui_surface_destroy        (UISurface*);
 void       ui_widget_disable         (UIWidget*);
 void       ui_widget_double_click    (UIWidget*);
 void       ui_widget_draw            (UIWidget*, UIContext*);
-void       ui_widget_draw_area       (UIWidget*, UIContext*, UIArea);
+void       ui_widget_draw_area       (UIWidget*, UIContext*, UIArea*);
 void       ui_widget_enable          (UIWidget*);
 UIArea     ui_widget_get_area        (UIWidget*);
 UIWindow*  ui_widget_get_window      (UIWidget*);
@@ -251,12 +251,13 @@ UIWindow*  ui_window                 (UIWindow*, UIApp*);
 void       ui_window_attach          (UIWindow*, UIWidget**);
 void       ui_window_close           (UIWindow*);
 void       ui_window_draw            (UIWidget*, UIContext*);
-void       ui_window_draw_area       (UIWidget*, UIContext*, UIArea);
+void       ui_window_draw_area       (UIWidget*, UIContext*, UIArea*);
 void       ui_window_draw_begin      (UIWindow*, UIContext*);
 void       ui_window_draw_end        (UIWindow*, UIContext*);
 void       ui_window_mouse_down      (UIWindow*, UIPosition, UIMouseButtons);
 void       ui_window_mouse_move      (UIWindow*, UIPosition);
 void       ui_window_mouse_up        (UIWindow*, UIPosition, UIMouseButtons, double);
+void       ui_window_must_redraw     (UIWindow*, UIArea*);
 void       ui_window_on_close        (UIWindow*);
 void       ui_window_on_key_down     (UIWindow*);
 void       ui_window_on_mouse_enter  (UIWindow*);

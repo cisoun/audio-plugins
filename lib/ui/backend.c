@@ -267,8 +267,8 @@ void ui_widget_draw(UIWidget* w, UIContext* c) {
 	}
 }
 
-void ui_widget_draw_area(UIWidget* w, UIContext* c, UIArea r) {
-	cairo_rectangle(c, r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1);
+void ui_widget_draw_area(UIWidget* w, UIContext* c, UIArea* r) {
+	cairo_rectangle(c, r->x1, r->y1, r->x2 - r->x1, r->y2 - r->y1);
 	cairo_clip(c);
 	ui_widget_draw(w, c);
 	cairo_reset_clip(c);
@@ -345,10 +345,8 @@ void ui_widget_must_redraw(UIWidget* w) {
 	if (window == NULL) {
 		return;
 	}
-	UIArea widget_area = ui_widget_get_area(w);
-	UIArea dirty_area  = ui_area_add(&widget_area, &window->dirty_area);
-	window->is_dirty   = true;
-	memcpy(&window->dirty_area, &dirty_area, sizeof(UIArea));
+	UIArea a = ui_widget_get_area(w);
+	ui_window_must_redraw(window, &a);
 }
 
 void ui_widget_scroll(UIWidget* w, UIDirections d, float dx, float dy) {
@@ -431,31 +429,29 @@ void ui_window_draw(UIWidget* w, UIContext* c) {
 	ui_window_draw_end(window, c);
 }
 
-void ui_window_draw_area(UIWidget* w, UIContext* c, UIArea a) {
+void ui_window_draw_area(UIWidget* w, UIContext* c, UIArea* a) {
 	UIWindow* window = (UIWindow*)w;
 	ui_window_draw_begin(window, c);
 
-	cairo_rectangle(c, a.x1, a.y1, a.x2 - a.x1, a.y2 - a.y1);
-	cairo_clip(c);
+	cairo_rectangle(c, a->x1, a->y1, a->x2 - a->x1, a->y2 - a->y1);
+	cairo_clip_preserve(c);
 
 	if (window->draw) {
 		window->draw((UIWidget*)window, c);
 	}
 	for (int i = 0; i < w->children_count; i++) {
 		UIWidget* widget = w->children[i];
-		if (ui_widget_intersect_area(widget, &a)) {
-			ui_widget_draw(widget, c);
+		if (ui_widget_intersect_area(widget, a)) {
+			ui_widget_draw_area(widget, c, a);
 		}
 	}
 
-	cairo_reset_clip(c);
-
 	ui_window_draw_end(window, c);
-	window->is_dirty      = false;
 	window->dirty_area.x1 = w->size.width;
 	window->dirty_area.y1 = w->size.height;
 	window->dirty_area.x2 = 0;
 	window->dirty_area.y2 = 0;
+	window->is_dirty = false;
 }
 
 void ui_window_draw_begin(UIWindow* w, UIContext* c) {
@@ -551,6 +547,18 @@ void ui_window_mouse_up(UIWindow* w, UIPosition p, UIMouseButtons b, double t) {
 			mouse_click_time = t;
 		}
 	}
+}
+
+void ui_window_must_redraw(UIWindow* w, UIArea* a) {
+	w->is_dirty = true;
+	int scale   = w->scale;
+	puglObscureRegion(
+		w->view,
+		scale * (a->x1),
+		scale * (a->y1),
+		scale * (a->x2 - a->x1),
+		scale * (a->y2 - a->y1)
+	);
 }
 
 void ui_window_on_close(UIWindow* w) {
