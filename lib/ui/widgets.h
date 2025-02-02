@@ -67,7 +67,7 @@ bool         ui_file_list_is_valid      (UIWidget*, KitFileInfo*);
 void         ui_file_list_mouse_down    (UIWidget*, UIPosition, UIMouseButtons);
 
 UIWidget*    ui_knob                    (UIKnob*);
-void         ui_knob_destroy            (UIWidget*);
+void         ui_knob_destroy            (UIKnob*);
 void         ui_knob_draw               (UIWidget*, UIContext*);
 void         ui_knob_mouse_move         (UIWidget*, UIPosition);
 void         ui_knob_scroll             (UIWidget*, UIDirections, float, float);

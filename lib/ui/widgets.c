@@ -23,8 +23,7 @@ UIButton* ui_button_new() {
 	return b;
 }
 
-inline void ui_button_destroy(UIButton* w) {
-	UIButton* b = (UIButton*)w;
+inline void ui_button_destroy(UIButton* b) {
 	destroy(b);
 }
 
@@ -67,7 +66,6 @@ void ui_button_mouse_up(UIWidget* w, UIPosition client, UIMouseButtons b) {
 }
 
 void ui_button_state_change(UIWidget* w, UIWidgetStates s) {
-	printf("STATE CHANGE: %d\n", s);
 	ui_widget_must_redraw(w);
 }
 
@@ -199,8 +197,7 @@ UIWidget* ui_knob(UIKnob* k) {
 	return (UIWidget*)k;
 }
 
-inline void ui_knob_destroy(UIWidget* w) {
-	UIKnob* k = (UIKnob*)w;
+inline void ui_knob_destroy(UIKnob* k) {
 	destroy(k);
 }
 
@@ -337,9 +334,7 @@ void ui_list_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b) {
 }
 
 void ui_list_mouse_move(UIWidget* w, UIPosition client){
-	if (has_flag(w->state, WIDGET_STATE_CLICKED)) {
-		//ui_list_mouse_down(w, client, 0);
-	}
+	// Nothing to do now.
 }
 
 void ui_list_scroll(UIWidget* w, UIDirections direction, const float dx, const float dy) {
