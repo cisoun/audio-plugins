@@ -343,7 +343,7 @@ void ui_list_scroll(UIWidget* w, UIDirections direction, const float dx, const f
 		return;
 	}
 	const int min = -(l->items->count * UI_LIST_ITEM_HEIGHT - w->size.height);
-	l->offset_y   = clamp(l->offset_y + dy, min, 0);
+	l->offset_y   = clamp(l->offset_y + dy * 5, min, 0);
 	ui_widget_must_redraw(w);
 }
 
