@@ -7,6 +7,21 @@
 
 static double mouse_click_time;
 
+static void handle_expose(UIWindow* w, const PuglEvent* e) {
+	if (!w->is_dirty) {
+		return;
+	}
+	const UIContext*       context = (UIContext*)puglGetContext(w->view);
+	const PuglExposeEvent* event   = &e->expose;
+	const float            scale   = 1 / w->scale;
+	ui_window_draw_area((UIWidget*)w, context, &(UIArea){
+		scale * (event->x),
+		scale * (event->y),
+		scale * (event->x + event->width),
+		scale * (event->y + event->height)
+	});
+}
+
 static void handle_key_down(UIWindow* w, const PuglEvent* e) {
 	w->on_key_down(w, e->key.keycode);
 }
@@ -67,27 +82,10 @@ static PuglStatus handle_event(PuglView* view, const PuglEvent* event)
  		case PUGL_BUTTON_PRESS:   handle_mouse_down(window, event); break;
         case PUGL_BUTTON_RELEASE: handle_mouse_up(window, event); break;
 		case PUGL_KEY_PRESS:      handle_key_down(window, event); break;
-		case PUGL_REALIZE:        break;
-		case PUGL_UPDATE:
-			if (window->is_dirty) {
-				//puglPostRedisplay(view); break;
-				const PuglRect rect = {
-					window->scale * window->dirty_area.x1,
-					window->scale * window->dirty_area.y1,
-					window->scale * (window->dirty_area.x2 - window->dirty_area.x1),
-					window->scale * (window->dirty_area.y2 - window->dirty_area.y1),
-				};
-				puglPostRedisplayRect(view, rect);
-			}
-			break;
-		case PUGL_EXPOSE: {
-			if (!window->is_dirty) {
-				break;
-			}
-			UIContext* context       = (UIContext*)puglGetContext(view);
-			//ui_window_draw((UIWidget*)window, context); break;
-			ui_window_draw_area((UIWidget*)window, context, window->dirty_area); break;
-		}
+		//case PUGL_REALIZE:        break;
+		//case PUGL_UPDATE:         handle_update(window, event); break;
+		//case PUGL_UPDATE:         break;
+		case PUGL_EXPOSE:         handle_expose(window, events); break;
 		case PUGL_CLOSE:
 			window->on_close(window);
 			break;
