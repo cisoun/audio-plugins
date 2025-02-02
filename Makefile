@@ -18,8 +18,8 @@ $(LIB_DIR)/pugl/build_$(TARGET):
 
 darwin: $(LIB_DIR)/pugl/build_$(TARGET) $(BUILD_DIR)
 	cc $(CC_FLAGS) \
-	   $(LIB_DIR)/pugl/build_darwin/libpugl_mac_cairo-0.0.dylib.p/src_mac_cairo.m.o \
-	   $(LIB_DIR)/pugl/build_darwin/libpugl_mac-0.0.dylib.p/*.o \
+	   $(LIB_DIR)/pugl/build/libpugl_mac_cairo-0.0.dylib.p/src_mac_cairo.m.o \
+	   $(LIB_DIR)/pugl/build/libpugl_mac-0.0.dylib.p/*.o \
 	   -I $(LIB_DIR) \
 	   -I $(LIB_DIR)/pugl/include \
 	   -I $(LIB_DIR)/pugl/src \
@@ -29,14 +29,15 @@ darwin: $(LIB_DIR)/pugl/build_$(TARGET) $(BUILD_DIR)
 	   -framework CoreVideo \
 	   -lglfw \
 	   -lsndfile \
+	   -lpthread \
 	   $(BREW_DIR)/lib/libcairo.dylib \
 	   main.c lib/ui/*.c lib/*.c -o $(BUILD_DIR)/test
 
 linux: $(LIB_DIR)/pugl/build_$(TARGET) $(BUILD_DIR)
 	cc $(CC_FLAGS) \
 	   $(LIB_DIR)/cairo/build/src/libcairo.so \
-	   $(LIB_DIR)/pugl/build_linux/libpugl_x11-0.so.0.5.3.p/*.o \
-	   $(LIB_DIR)/pugl/build_linux/libpugl_x11_cairo-0.so.0.5.3.p/*.o \
+	   $(LIB_DIR)/pugl/build/libpugl_x11-0.so.0.5.3.p/*.o \
+	   $(LIB_DIR)/pugl/build/libpugl_x11_cairo-0.so.0.5.3.p/*.o \
 	   -I $(LIB_DIR)/cairo/build/src \
 	   -I $(LIB_DIR)/cairo/src \
 	   -I $(LIB_DIR)/pugl/include \
