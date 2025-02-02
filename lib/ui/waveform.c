@@ -1,9 +1,10 @@
 #include "backend.h"
 #include "colors.h"
+#include "kit-thread.h"
 #include "waveform.h"
 #include <math.h>
 
-static void ui_waveform_generate_waveform(UIWaveform*);
+static void* ui_waveform_generate_waveform(void*);
 
 UIWidget* ui_waveform(UIWaveform* wf) {
 	UIWaveform* waveform = new(UIWaveform);
@@ -22,22 +23,38 @@ void ui_waveform_destroy(UIWaveform* wf) {
 
 void ui_waveform_draw(UIWidget* w, UIContext* c) {
 	if (w->surface != NULL) {
-		cairo_set_source_surface(c, w->surface, w->position.x, w->position.y);
+		UIWindow* window   = ui_widget_get_window(w);
+		float     scale    = window->scale;
+		cairo_save(c);
+		cairo_scale(c, 1 / scale, 1 / scale);
+		cairo_set_source_surface(c, w->surface, w->position.x * scale, w->position.y * scale);
 		cairo_paint(c);
+		cairo_restore(c);
 	}
 }
 
-static void ui_waveform_generate_waveform(UIWaveform* wf) {
+static void* ui_waveform_generate_waveform(void* args) {
+	UIWaveform* wf = (UIWaveform*)args;
+
 	if (wf->audio == NULL) {
-		return;
+		return NULL;
 	}
 
+	UIWidget*  widget         = (UIWidget*)wf;
 	KitAudio*  audio          = wf->audio;
 	int        channels       = wf->audio->channels;
 	float      channel_height = wf->size.height / channels;
 
-	UISurface* surface = ui_surface(&wf->size);
+	UIWindow*  window         = ui_widget_get_window(widget);
+	float      scale          = window->scale;
+
+	UISurface* surface = ui_surface(&(UISize){
+		wf->size.width * scale,
+		wf->size.height * scale
+	});
 	UIContext* context = ui_surface_draw_begin(surface);
+
+	cairo_scale(context, scale, scale);
 
 	for (int i = 0; i < channels; i++) {
 		int x = 0;
@@ -52,18 +69,22 @@ static void ui_waveform_generate_waveform(UIWaveform* wf) {
 			);
 		}
 		cairo_set_line_width(context, 1);
-		cairo_set_source_rgba(context, ui_color_to_cairo(COLOR_DARK[9]));
+		cairo_set_source_rgba(context, ui_color_to_cairo(COLOR_DARK[7]));
 		cairo_stroke(context);
 	}
 
 	ui_surface_draw_end(surface, context);
 
-	ui_widget_set_surface((UIWidget*)wf, surface);
+	ui_widget_set_surface(widget, surface);
+	ui_widget_must_redraw(widget);
+
+	return NULL;
 }
 
 void ui_waveform_set_audio(UIWidget* w, KitAudio* a) {
 	UIWaveform* wf = (UIWaveform*)w;
 	wf->audio      = a;
-	ui_waveform_generate_waveform(wf);
+	KitThread t = kit_thread(ui_waveform_generate_waveform, (void*)wf);
+	kit_thread_detach(t);
 	ui_widget_must_redraw(w);
 }
