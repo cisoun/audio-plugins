@@ -67,7 +67,9 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 	memcpy(fd, &args, sizeof(UIFileDialog));
 
 	UIText* text           = new(UIText);
+	text->parent           = widget;
 	text->position         = (UIPosition){10, 10};
+	text->size             = (UISize){fd->size.width - 20, 20};
 	ui_text(text);
 
 	UIFileList* list       = new(UIFileList);
