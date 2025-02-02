@@ -11,7 +11,7 @@ static void handle_expose(UIWindow* w, const PuglEvent* e) {
 	if (!w->is_dirty) {
 		return;
 	}
-	const UIContext*       context = (UIContext*)puglGetContext(w->view);
+	UIContext*             context = (UIContext*)puglGetContext(w->view);
 	const PuglExposeEvent* event   = &e->expose;
 	const float            scale   = 1 / w->scale;
 	ui_window_draw_area((UIWidget*)w, context, &(UIArea){
@@ -85,7 +85,7 @@ static PuglStatus handle_event(PuglView* view, const PuglEvent* event)
 		//case PUGL_REALIZE:        break;
 		//case PUGL_UPDATE:         handle_update(window, event); break;
 		//case PUGL_UPDATE:         break;
-		case PUGL_EXPOSE:         handle_expose(window, events); break;
+		case PUGL_EXPOSE:         handle_expose(window, event); break;
 		case PUGL_CLOSE:
 			window->on_close(window);
 			break;
