@@ -1,5 +1,6 @@
 TARGET    = $(shell uname | tr '[:upper:]' '[:lower:]')
-CC_DEBUG_FLAGS = -O1 -g -fsanitize=address -fno-omit-frame-pointer
+CC_DEBUG_FLAGS = -O3 -g -fsanitize=address -fno-omit-frame-pointer -fstrict-aliasing
+# Add -Wextra for extra paranoia.
 CC_FLAGS  = -I $(LIB_DIR) -std=gnu11 -Wall $(LDFLAGS_EXTRA) $(CC_DEBUG_FLAGS)
 BUILD_DIR = build
 BREW_DIR  = /opt/homebrew
