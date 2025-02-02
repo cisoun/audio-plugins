@@ -11,7 +11,7 @@ fi
 
 TARGET=$(uname | tr '[:upper:]' '[:lower:]')
 
-BUILD_DIR=build_$TARGET
+BUILD_DIR=build
 
 cd $PUGL_DIR
 meson setup $BUILD_DIR
