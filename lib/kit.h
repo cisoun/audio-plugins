@@ -9,8 +9,8 @@
  *    means a memory leak is occuring somewhere.
  */
 
-#ifndef INTERNAL_H
-#define INTERNAL_H
+#ifndef KIT_H
+#define KIT_H
 
 #include <dirent.h>
 #include <limits.h>
@@ -22,7 +22,7 @@ int allocs;
 
 #define new(t) calloc(1, sizeof(t)); LOGALLOC
 #define alloc(t, n) calloc(n, sizeof(t)); LOGALLOC
-#define destroy(o) if (o != NULL) free(o); o = NULL; LOGFREE
+#define destroy(o) if (o != NULL) { free(o); o = NULL; LOGFREE; }
 
 #ifdef _WIN32
 	#define PATH_SEPARATOR "\"
