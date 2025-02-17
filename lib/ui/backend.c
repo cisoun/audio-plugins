@@ -112,8 +112,9 @@ void ui_app_destroy(UIApp* a) {
 
 void ui_app_run(UIApp* a) {
 	while (!a->quit) {
-		puglUpdate(a->world, -1); //1.0 / FPS);
 		// Here we wait for Pugl events to update.
+		// Otherwise, replace -1 by 1.0 / FPS.
+		puglUpdate(a->world, -1);
 	}
 }
 
@@ -460,7 +461,7 @@ void ui_window_draw_begin(UIWindow* w, UIContext* c) {
 
 void ui_window_draw_end(UIWindow* w, UIContext* c) {
 	// DEBUG
-	//return;
+	return;
 	if (w->hovered_widget) {
 		UIWidget* widget = w->hovered_widget;
 		ui_draw_rectangle(c, &(UIRectangleProperties){
