@@ -36,8 +36,8 @@ typedef enum {
 } KitFileTypes;
 
 typedef struct {
-	int    count;
-	void** items;
+	unsigned int count;
+	void**       items;
 } KitArray;
 
 typedef struct {
