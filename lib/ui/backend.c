@@ -113,6 +113,7 @@ void ui_app_destroy(UIApp* a) {
 void ui_app_run(UIApp* a) {
 	while (!a->quit) {
 		puglUpdate(a->world, -1); //1.0 / FPS);
+		// Here we wait for Pugl events to update.
 	}
 }
 
@@ -379,7 +380,8 @@ void ui_widget_unset_state(UIWidget* w, UIWidgetStates s) {
 
 UIWindow* ui_window(UIWindow* w, UIApp* a) {
 	UIWindow* window = new(UIWindow);
-	PuglView* view = puglNewView(a->world);
+	PuglView* view   = puglNewView(a->world);
+	memcpy(window, w, sizeof(UIWindow));
 	puglSetViewString(view, PUGL_WINDOW_TITLE, w->title);
 	puglSetSizeHint  (view, PUGL_DEFAULT_SIZE, w->size.width * w->scale, w->size.height * w->scale);
 	//puglSetSizeHint (view, PUGL_MIN_SIZE, w->size.width, w->size.height);
@@ -387,21 +389,23 @@ UIWindow* ui_window(UIWindow* w, UIApp* a) {
 	//puglSetSizeHint (view, PUGL_MAX_ASPECT, 16, 9);
 	puglSetViewHint  (view, PUGL_RESIZABLE, w->resizable);
 	puglSetViewHint  (view, PUGL_IGNORE_KEY_REPEAT, PUGL_TRUE);
-	puglSetHandle    (view, w);
 	puglSetBackend   (view, puglCairoBackend());
 	puglSetViewHint  (view, PUGL_IGNORE_KEY_REPEAT, true);
 	puglSetEventFunc (view, handle_event);
-	set_default      (w->draw,       ui_window_draw);
-	set_default      (w->draw_area,  ui_widget_draw_area);
-	set_default      (w->draw_begin, ui_window_draw_begin);
-	set_default      (w->draw_end,   ui_window_draw_end);
-	ui_window_attach (w, w->children);
-	w->app        = a;
-	w->dirty_area = (UIArea){0, 0, w->size.width, w->size.height};
-	w->is_dirty   = true;
-	w->type       = WIDGET_WINDOW;
-	w->view       = view;
-	memcpy(window, w, sizeof(UIWindow));
+	puglSetHandle    (view, window);
+	set_default      (window->draw,       ui_window_draw);
+	set_default      (window->draw_area,  ui_widget_draw_area);
+	set_default      (window->draw_begin, ui_window_draw_begin);
+	set_default      (window->draw_end,   ui_window_draw_end);
+	ui_window_attach (window, w->children);
+	window->app           = a;
+	window->is_dirty      = false;
+	window->type          = WIDGET_WINDOW;
+	window->view          = view;
+	window->dirty_area.x1 = 0;
+	window->dirty_area.y1 = 0;
+	window->dirty_area.x2 = w->size.width;
+	window->dirty_area.y2 = w->size.height;
 	return window;
 }
 
@@ -447,10 +451,6 @@ void ui_window_draw_area(UIWidget* w, UIContext* c, UIArea* a) {
 	}
 
 	ui_window_draw_end(window, c);
-	window->dirty_area.x1 = w->size.width;
-	window->dirty_area.y1 = w->size.height;
-	window->dirty_area.x2 = 0;
-	window->dirty_area.y2 = 0;
 	window->is_dirty = false;
 }
 
@@ -567,4 +567,5 @@ void ui_window_on_close(UIWindow* w) {
 
 void ui_window_show(UIWindow* w) {
 	puglShow(w->view, PUGL_SHOW_RAISE);
+	ui_window_must_redraw(w, &(UIArea){ 0, 0, w->size.width, w->size.height});
 }
