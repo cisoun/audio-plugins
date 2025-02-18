@@ -280,7 +280,7 @@ void ui_knob_mouse_move(UIWidget* w, UIPosition client) {
 
 void ui_knob_scroll(UIWidget* w, UIDirections direction, float dx, float dy) {
 	UIKnob* k = (UIKnob*)w;
-	dy = clamp(dy, -10, 10); // Limit speed, especially for mouse wheels.
+	dy = clamp(dy, -10, 10) * 5; // Limit speed, especially for mouse wheels.
 	ui_knob_set_value(w, k->value + dy / 200);
 }
 
