@@ -13,9 +13,9 @@ Install the prerequisites:
 # MacOS
 brew install cairo libsndfile lv2
 # Debian/Ubuntu
-apt-get install libcairo2-dev
+apt-get install libcairo2-dev libsndfile1-dev lv2-dev
 # Fedora
-dnf install cairo-devel
+dnf install cairo-devel libsndfile-devel lv2-devel
 ```
 
 Then from the root folder:
