@@ -1,5 +1,10 @@
 # Plugins
 
+This project aims to develop a series of simple audio plugins with minimal dependancies.
+
+> [!NOTE]
+> This project is at its proof of concept stage. No usable plugin is available at this moment.
+
 ## Building
 
 Install the prerequisites:
@@ -16,26 +21,19 @@ dnf install cairo-devel
 Then from the root folder:
 
 ```sh
+# Compile Pugl and project.
 make
+# Run test window.
 make run
 ```
 
 ## Roadmap
 
- - [ ] UI backend
-   - [X] Windowing backend (pugl)
-   - [X] Drawing backend (cairo)
-   - [X] Widgets
-     - [X] Buttons
-     - [X] File dialog
-     - [X] Knobs
-     - [X] Text
-   - [ ] UI optimizations
- - [ ] DSP backend
- - [ ] Plugin integration
-   - [ ] AudioUnit
-   - [ ] LV2
-   - [ ] VST
+Please refer the the [roadmap](ROADMAP.md).
+
+## License
+
+GNU General Public License version 3.
 
 ## References
 
