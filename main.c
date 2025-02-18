@@ -3,16 +3,17 @@
 #include "lib/kit-audio.h"
 #include "lib/kit.h"
 #include "lib/ui/backend.h"
+#include "lib/ui/colors.h"
 #include "lib/ui/file-dialog.h"
 #include "lib/ui/waveform.h"
 #include "lib/ui/widgets.h"
 #include "ui/ui.h"
 #include <fftw3.h>
 
-UIColor* COLOR_DARK       = COLOR_ROSADE;
-UIColor* COLOR_PRIMARY    = COLOR_YELLOW;
-UIColor* COLOR_TEXT       = &COLOR_ROSADE[7];
-UIColor* COLOR_TEXT_LIGHT = &COLOR_ROSADE[4];
+UIColor* COLOR_DARK       = COLOR_NEUTRAL_GREY;
+UIColor* COLOR_PRIMARY    = COLOR_RED;
+UIColor* COLOR_TEXT       = &COLOR_NEUTRAL_GREY[7];
+UIColor* COLOR_TEXT_LIGHT = &COLOR_NEUTRAL_GREY[4];
 
 KitFileInfo* file;
 UIApp*       app;
@@ -72,14 +73,13 @@ static void on_mouse_move(UIWindow* w, UIPosition client) {
 }
 
 static void on_window_draw(UIWidget* widget, UIContext* c) {
-	printf("on_window_draw\n");
 	UIWindow* w = (UIWindow*)widget;
 	ui_draw_rectangle(c, &(UIRectangleProperties){
-		.color    = COLOR_DARK[0],
+		.color    = COLOR_DARK[1],
 		.size     = w->size,
 	});
 	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
-		.color    = COLOR_DARK[1],
+		.color    = COLOR_DARK[2],
 		.position = {10, 40},
 		.radius   = 6,
 		.size     = {w->size.width - 20, 45},
@@ -89,13 +89,13 @@ static void on_window_draw(UIWidget* widget, UIContext* c) {
 		.position = {10, 40 + 45 + 10},
 		.radius   = 6,
 		.size     = {w->size.width - 20, 95},
-		.stroke   = {
-			.width = 1,
-			.color = COLOR_DARK[3]
-		}
+		// .stroke   = {
+		// 	.width = 1,
+		// 	.color = COLOR_DARK[3]
+		// }
 	});
 	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
-		.color    = COLOR_DARK[1],
+		.color    = COLOR_DARK[2],
 		.position = {10, w->size.height - 10 - 90},
 		.radius   = 6,
 		.size     = {w->size.width - 20, 90},
@@ -108,21 +108,21 @@ int main(int argc, char** argv) {
 	});
 
 	knob_input = ui_knob(&(UIKnob){
-		.color    = COLOR_YELLOW,
+		.color    = &COLOR_ROSE[5],
 		.position = {20, 210},
 		.size     = {60, 60},
 		.value    = 0.5
 	});
 
 	knob_dry_wet = ui_knob(&(UIKnob){
-		.color    = COLOR_ORANGE,
+		.color    = &COLOR_RED[5],
 		.position = {20 + 60 + 10, 210},
 		.size     = {60, 60},
 		.value    = 0.5
 	});
 
 	knob_output = ui_knob(&(UIKnob){
-		.color    = COLOR_RED,
+		.color    = &COLOR_ORANGE[5],
 		.position = {20 + 60 + 10 + 60 + 10, 210},
 		.size     = {60, 60},
 		.value    = 0.5
@@ -181,12 +181,12 @@ int main(int argc, char** argv) {
 
 	dialog = ui_file_dialog((UIFileDialog){
 		.close   = on_dialog_close,
-		.filters = (char*[5]){".wav", ".flac", ".ogg", ".c"},
+		.filters = (char*[5]){".wav", ".flac", ".ogg"},
 		.size    = {500, 300}
 	});
 
 
-	UIWindow* window = ui_window(&(UIWindow){
+	window = ui_window(&(UIWindow){
 		.draw          = on_window_draw,
 		.on_close      = on_close,
 		.on_key_down   = on_key_down,
