@@ -41,8 +41,8 @@ void ui_button_draw(UIWidget* w, UIContext* c) {
 		.bold   = false,
 		.origin = ORIGIN_M
 	};
-	UIColor color_fill   = enabled ? hovered ? b->color[6] : b->color[5] : b->color[3];
-	UIColor color_stroke = enabled ? hovered ? b->color[7] : b->color[6] : b->color[2];
+	UIColor color_fill   = enabled ? hovered ? b->color[5] : b->color[4] : b->color[2];
+	UIColor color_stroke = enabled ? hovered ? b->color[6] : b->color[5] : b->color[1];
 	ui_draw_rounded_rectangle(c, &(UIRoundedRectangleProperties){
 		.color    = color_fill,
 		.position = b->position,
@@ -99,9 +99,9 @@ void ui_file_list_draw(UIWidget* w, UIContext* c) {
 	cairo_rectangle(c, x, y, width, height);
 	cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[1]));
 	cairo_fill_preserve(c);
-	cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[3]));
-	cairo_set_line_width(c, 1);
-	cairo_stroke(c);
+	// cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[3]));
+	// cairo_set_line_width(c, 1);
+	// cairo_stroke(c);
 
 	cairo_rectangle(c, x, y, width, height);
 	cairo_clip(c);
@@ -127,9 +127,9 @@ void ui_file_list_draw(UIWidget* w, UIContext* c) {
 		if (item == NULL) {
 			continue;
 		}
-		UIColor* color = COLOR_TEXT;
+		UIColor* color = &COLOR_DARK[9];
 	 	if (item->type == KIT_FILE_TYPE_FILE && !ui_file_list_is_valid(w, item)) {
-			color = COLOR_TEXT_LIGHT;
+			color = &COLOR_DARK[5];
 		}
 		ui_draw_text(c, &(UITextProperties){
 			.color    =  *color,
@@ -220,6 +220,8 @@ void ui_knob_draw(UIWidget* w, UIContext* c) {
 		.position = {midX, midY}
 	});
 
+	cairo_set_line_cap(c, CAIRO_LINE_CAP_ROUND);
+
 	// Knob indicator.
 	ui_draw_lines(c, &(UILinesProperties){
 		.positions = (UIPosition*[]){
@@ -233,17 +235,6 @@ void ui_knob_draw(UIWidget* w, UIContext* c) {
 		.stroke = {
 			.color = COLOR_DARK[7],
 			.width = 2
-		}
-	});
-
-	// Outer arc.
-	ui_draw_arc(c, &(UIArcProperties){
-		.angle    = {_UI_KNOB_ANGLE_MIN, _UI_KNOB_ANGLE_MAX},
-		.position =  {midX, midY},
-		.radius   = arcRadius,
-		.stroke   = {
-			.color = COLOR_DARK[2],
-			.width = stroke
 		}
 	});
 
@@ -264,8 +255,8 @@ void ui_knob_draw(UIWidget* w, UIContext* c) {
 		.position =  {midX, midY},
 		.radius   = arcRadius,
 		.stroke   = {
-			.color = k->color[6],
-			.width = stroke * 0.5
+			.color = *k->color,
+			.width = stroke * 0.3
 		}
 	});
 }
