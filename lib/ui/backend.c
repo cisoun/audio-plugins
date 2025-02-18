@@ -152,7 +152,6 @@ void ui_draw_lines(UIContext* c, UILinesProperties* l) {
 		position = l->positions[i];
 		cairo_line_to(c, position->x, position->y);
 	}
-	cairo_close_path(c);
 	cairo_set_line_width(c, l->stroke.width);
 	cairo_set_source_rgba(c, ui_color_to_cairo(l->stroke.color));
 	cairo_stroke(c);
