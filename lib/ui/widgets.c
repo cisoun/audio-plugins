@@ -53,7 +53,6 @@ void ui_button_draw(UIWidget* w, UIContext* c) {
 			.width = 1
 		}
 	});
-
 	ui_draw_text(c, &tp);
 }
 

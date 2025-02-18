@@ -23,8 +23,8 @@ void ui_waveform_destroy(UIWaveform* wf) {
 
 void ui_waveform_draw(UIWidget* w, UIContext* c) {
 	if (w->surface != NULL) {
-		UIWindow* window   = ui_widget_get_window(w);
-		float     scale    = window->scale;
+		UIWindow* window = ui_widget_get_window(w);
+		float     scale  = window->scale;
 		cairo_save(c);
 		cairo_scale(c, 1 / scale, 1 / scale);
 		cairo_set_source_surface(c, w->surface, w->position.x * scale, w->position.y * scale);
