@@ -4,7 +4,7 @@
 
 const int UI_LIST_ITEM_HEIGHT = 18;
 static int knob_last_y = 0;
-static inline int ui_list_get_selection_at_position(UIWidget*, UIPosition);
+static inline unsigned int ui_list_get_selection_at_position(UIWidget*, UIPosition);
 
 UIWidget* ui_button(UIButton* b) {
 	set_default(b->color,        COLOR_PRIMARY);
@@ -114,8 +114,8 @@ void ui_file_list_draw(UIWidget* w, UIContext* c) {
 	}
 
 	// Draw selection.
-	if (l->selected_index > -1) {
-		cairo_rectangle(c, x, y + l->offset_y + HEIGHT * l->selected_index, width, HEIGHT);
+	if (l->selection_index > 0) {
+		cairo_rectangle(c, x, y + l->offset_y + HEIGHT * (l->selection_index - 1), width, HEIGHT);
 		cairo_set_source_rgba(c, ui_color_to_cairo(COLOR_DARK[4]));
 		cairo_fill(c);
 	}
@@ -175,16 +175,16 @@ bool ui_file_list_is_valid(UIWidget* w, KitFileInfo* fi) {
 }
 
 void ui_file_list_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b) {
-	UIFileList* fl   = (UIFileList*)w;
-	int index        = ui_list_get_selection_at_position(w, p);
-	KitFileInfo* kfi = (KitFileInfo*)fl->items->items[index];
+	UIFileList*  fl    = (UIFileList*)w;
+	int          index = ui_list_get_selection_at_position(w, p);
+	KitFileInfo* kfi   = (KitFileInfo*)fl->items->items[index - 1];
 	if (
 		kfi->type == KIT_FILE_TYPE_FOLDER ||
 		(kfi->type == KIT_FILE_TYPE_FILE && ui_file_list_is_valid(w, kfi))
 	) {
 		ui_list_select(w, index);
 	} else {
-		ui_list_select(w, -1);
+		ui_list_select(w, 0);
 	};
 }
 
@@ -291,13 +291,13 @@ void ui_knob_set_value(UIWidget* w, float value) {
 }
 
 UIWidget* ui_list (UIList* l) {
-	l->draw           = ui_list_draw;
-	l->item_height    = UI_LIST_ITEM_HEIGHT;
-	l->mouse_down     = ui_list_mouse_down;
-	l->mouse_move     = ui_list_mouse_move;
-	l->scroll         = ui_list_scroll;
-	l->selected_index = -1;
-	l->type           = WIDGET_LIST;
+	l->draw            = ui_list_draw;
+	l->item_height     = UI_LIST_ITEM_HEIGHT;
+	l->mouse_down      = ui_list_mouse_down;
+	l->mouse_move      = ui_list_mouse_move;
+	l->scroll          = ui_list_scroll;
+	l->selection_index = 0;
+	l->type            = WIDGET_LIST;
 	return (UIWidget*)l;
 }
 
@@ -312,21 +312,27 @@ void ui_list_draw(UIWidget* w, UIContext* c) {
 }
 
 void* ui_list_get_selection(UIWidget* w) {
-	UIList* l       = (UIList*)w;
-	KitArray* items = l->items;
-	const int index = l->selected_index;
-	if (index > -1 && items && items->items[index]) {
-		return items->items[index];
+	const UIList*      l     = (UIList*)w;
+	const KitArray*    items = l->items;
+	const unsigned int index = l->selection_index;
+	void*              item  = items->items[index - 1];
+	if (index > 0 && item != NULL) {
+		return item;
 	}
 	return NULL;
 }
 
-static inline int ui_list_get_selection_at_position(UIWidget* w, UIPosition p) {
-	UIList* l        = (UIList*)w;
-	const int count  = l->items->count;
-	const int height = count * UI_LIST_ITEM_HEIGHT;
-	const int y      = ((p.y - l->offset_y) / height) * count;
-	return clamp(y, 0, count - 1);
+unsigned int ui_list_get_selection_index(UIWidget* w) {
+	UIList* l = (UIList*)w;
+	return l->selection_index;
+}
+
+static inline unsigned int ui_list_get_selection_at_position(UIWidget* w, UIPosition p) {
+	const UIList*      l      = (UIList*)w;
+	const unsigned int count  = l->items->count;
+	const unsigned int height = count * UI_LIST_ITEM_HEIGHT;
+	const unsigned int index  = ((p.y - l->offset_y) / height) * count;
+	return clamp(index + 1, 0, count);
 }
 
 void ui_list_mouse_down(UIWidget* w, UIPosition p, UIMouseButtons b) {
@@ -338,7 +344,7 @@ void ui_list_mouse_move(UIWidget* w, UIPosition client){
 }
 
 void ui_list_scroll(UIWidget* w, UIDirections direction, const float dx, const float dy) {
-	UIList* l     = (UIList*)w;
+	UIList* l = (UIList*)w;
 	if (l->items == NULL) {
 		return;
 	}
@@ -347,11 +353,11 @@ void ui_list_scroll(UIWidget* w, UIDirections direction, const float dx, const f
 	ui_widget_must_redraw(w);
 }
 
-void ui_list_select(UIWidget* w, int index) {
-	UIList* l         = (UIList*)w;
-	l->selected_index = clamp(index, -1, l->items->count - 1);
+void ui_list_select(UIWidget* w, unsigned int index) {
+	UIList* l          = (UIList*)w;
+	l->selection_index = clamp(index, 0, l->items->count);
 	if (l->selection_change) {
-		l->selection_change(w, l->selected_index);
+		l->selection_change(w, l->selection_index);
 	}
 	ui_widget_must_redraw(w);
 }
