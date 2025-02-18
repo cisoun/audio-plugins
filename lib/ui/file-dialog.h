@@ -11,8 +11,10 @@ typedef struct {
 	UIButton*   buttonOK;
 	KitArray*   files;
 	char**      filters;
+	bool        has_selection_changed;
 	UIFileList* list;
 	char*       path;
+	int         selection_index;
 	UIText*     text;
 	void        (*cancel) (UIWidget*);
 	void        (*close)  (UIWidget*, KitFileInfo*);

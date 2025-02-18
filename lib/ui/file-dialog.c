@@ -1,11 +1,10 @@
-#include <limits.h>
-#include <string.h>
-#include <errno.h>
 #include "backend.h"
 #include "colors.h"
 #include "file-dialog.h"
 #include "widgets.h"
-
+#include <errno.h>
+#include <limits.h>
+#include <string.h>
 
 static void open_file(UIFileDialog* fd, KitFileInfo* kfi) {
 	KitFileInfo* fi = ui_list_get_selection((UIWidget*)fd->list);
@@ -38,9 +37,10 @@ static void handle_cancel(UIWidget* w) {
 }
 
 static void handle_list_double_click(UIWidget* w) {
-	UIFileList* l = (UIFileList*)w;
-	if (l->selected_index > -1) {
-		UIFileDialog* fd  = (UIFileDialog*)l->parent;
+	UIFileList*   l     = (UIFileList*)w;
+	UIFileDialog* fd    = (UIFileDialog*)l->parent;
+	unsigned int  index = ui_list_get_selection_index(w);
+	if (index > 0 && !fd->has_selection_changed) {
 		KitFileInfo*  kfi = ui_file_list_get_selection(w);
 		if (kfi->type == KIT_FILE_TYPE_FOLDER) {
 			open_path(fd, kfi);
@@ -50,14 +50,16 @@ static void handle_list_double_click(UIWidget* w) {
 	}
 }
 
-static void handle_selection_change(UIWidget* w, int index) {
+static void handle_selection_change(UIWidget* w, unsigned int index) {
 	UIFileList*   fl = (UIFileList*)w;
 	UIFileDialog* fd = (UIFileDialog*)fl->parent;
-	if (index > -1) {
+	if (index > 0) {
 		ui_widget_enable((UIWidget*)fd->buttonOK);
 	} else {
 		ui_widget_disable((UIWidget*)fd->buttonOK);
 	}
+	fd->has_selection_changed = index != fd->selection_index;
+	fd->selection_index       = index;
 }
 
 UIWidget* ui_file_dialog(UIFileDialog args) {
@@ -183,7 +185,7 @@ void ui_file_dialog_scan(UIFileDialog* fd, const char* path) {
 		fd->list->items          = fd->files;
 		fd->list->offset_y       = 0;
 		ui_text_set_text((UIWidget*)fd->text, fd->path);
-		ui_list_select((UIWidget*)fd->list, -1);
+		ui_list_select((UIWidget*)fd->list, 0);
 	}
 }
 
