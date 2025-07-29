@@ -14,6 +14,6 @@ TARGET=$(uname | tr '[:upper:]' '[:lower:]')
 BUILD_DIR=build
 
 cd $PUGL_DIR
-meson setup $BUILD_DIR
+meson setup --reconfigure $BUILD_DIR
 cd $BUILD_DIR
 ninja
