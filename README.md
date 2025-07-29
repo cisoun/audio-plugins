@@ -1,6 +1,6 @@
 # Plugins
 
-This project aims to develop a series of simple audio plugins with minimal dependancies.
+This project aims to develop a series of simple audio plugins with minimal dependencies.
 
 > [!NOTE]
 > This project is at its proof of concept stage. No usable plugin is available at this moment.
