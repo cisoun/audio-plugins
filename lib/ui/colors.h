@@ -3,23 +3,20 @@
 
 #include "backend.h"
 
-#define rgb(r, g, b) {r / 255.0, g / 255.0, b / 255.0, 1.0}
+#define rgb(r, g, b) (UIColor){r / 255.0, g / 255.0, b / 255.0, 1.0}
 
-static const int _UI_COLOR_LEVELS = 10;
+extern UIColor COLOR_WARM_GREY[10];
+extern UIColor COLOR_NEUTRAL_GREY[10];
+extern UIColor COLOR_GREEN[10];
+extern UIColor COLOR_INDIGO[10];
+extern UIColor COLOR_YELLOW[10];
+extern UIColor COLOR_ORANGE[10];
+extern UIColor COLOR_RED[10];
+extern UIColor COLOR_ROSE[10];
 
-UIColor COLOR_WARM_GREY    [_UI_COLOR_LEVELS];
-UIColor COLOR_NEUTRAL_GREY [_UI_COLOR_LEVELS];
-
-UIColor COLOR_GREEN        [_UI_COLOR_LEVELS];
-UIColor COLOR_INDIGO       [_UI_COLOR_LEVELS];
-UIColor COLOR_ORANGE       [_UI_COLOR_LEVELS];
-UIColor COLOR_RED          [_UI_COLOR_LEVELS];
-UIColor COLOR_ROSE         [_UI_COLOR_LEVELS];
-UIColor COLOR_YELLOW       [_UI_COLOR_LEVELS];
-
-UIColor* COLOR_PRIMARY;
-UIColor* COLOR_DARK;
-UIColor* COLOR_TEXT;
-UIColor* COLOR_TEXT_LIGHT;
+extern UIColor* COLOR_PRIMARY;
+extern UIColor* COLOR_DARK;
+extern UIColor* COLOR_TEXT;
+extern UIColor* COLOR_TEXT_LIGHT;
 
 #endif

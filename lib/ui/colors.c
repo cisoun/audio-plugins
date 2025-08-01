@@ -1,7 +1,6 @@
 #include "colors.h"
-#include "backend.h"
 
-UIColor COLOR_WARM_GREY[_UI_COLOR_LEVELS] = {
+UIColor COLOR_WARM_GREY[10] = {
 	rgb(0x1e, 0x11, 0x11),
 	rgb(0x31, 0x20, 0x1d),
 	rgb(0x49, 0x33, 0x2b),
@@ -14,7 +13,7 @@ UIColor COLOR_WARM_GREY[_UI_COLOR_LEVELS] = {
 	rgb(0xff, 0xf4, 0xec),
 };
 
-UIColor COLOR_NEUTRAL_GREY[_UI_COLOR_LEVELS] = {
+UIColor COLOR_NEUTRAL_GREY[10] = {
 	rgb(0x16, 0x13, 0x17),
 	rgb(0x28, 0x23, 0x24),
 	rgb(0x3c, 0x36, 0x34),
@@ -27,7 +26,7 @@ UIColor COLOR_NEUTRAL_GREY[_UI_COLOR_LEVELS] = {
 	rgb(0xf7, 0xf7, 0xf6),
 };
 
-UIColor COLOR_GREEN[_UI_COLOR_LEVELS] = {
+UIColor COLOR_GREEN[10] = {
 	rgb(0x1c, 0x1f, 0x0c),
 	rgb(0x28, 0x33, 0x18),
 	rgb(0x45, 0x58, 0x16),
@@ -40,7 +39,7 @@ UIColor COLOR_GREEN[_UI_COLOR_LEVELS] = {
 	rgb(0xef, 0xf9, 0xd4),
 };
 
-UIColor COLOR_INDIGO[_UI_COLOR_LEVELS] = {
+UIColor COLOR_INDIGO[10] = {
 	rgb(0x15, 0x13, 0x43),
 	rgb(0x28, 0x2c, 0x6c),
 	rgb(0x4a, 0x4a, 0x98),
@@ -53,7 +52,7 @@ UIColor COLOR_INDIGO[_UI_COLOR_LEVELS] = {
 	rgb(0xfc, 0xf3, 0xfe),
 };
 
-UIColor COLOR_YELLOW[_UI_COLOR_LEVELS] = {
+UIColor COLOR_YELLOW[10] = {
 	rgb(0x2b, 0x13, 0x11),
 	rgb(0x5a, 0x2c, 0x12),
 	rgb(0x8f, 0x51, 0x17),
@@ -66,7 +65,7 @@ UIColor COLOR_YELLOW[_UI_COLOR_LEVELS] = {
 	rgb(0xff, 0xf7, 0xc6),
 };
 
-UIColor COLOR_ORANGE[_UI_COLOR_LEVELS] = {
+UIColor COLOR_ORANGE[10] = {
 	rgb(0x35, 0x0c, 0x19),
 	rgb(0x5d, 0x1f, 0x1c),
 	rgb(0x8d, 0x36, 0x27),
@@ -79,7 +78,7 @@ UIColor COLOR_ORANGE[_UI_COLOR_LEVELS] = {
 	rgb(0xff, 0xea, 0xa9),
 };
 
-UIColor COLOR_RED[_UI_COLOR_LEVELS] = {
+UIColor COLOR_RED[10] = {
 	rgb(0x3f, 0x01, 0x1d),
 	rgb(0x6e, 0x09, 0x23),
 	rgb(0x9b, 0x23, 0x3c),
@@ -92,7 +91,7 @@ UIColor COLOR_RED[_UI_COLOR_LEVELS] = {
 	rgb(0xff, 0xe7, 0xc3),
 };
 
-UIColor COLOR_ROSE[_UI_COLOR_LEVELS] = {
+UIColor COLOR_ROSE[10] = {
 	rgb(0x47, 0x00, 0x1f),
 	rgb(0x74, 0x00, 0x37),
 	rgb(0xa7, 0x0c, 0x51),
@@ -104,3 +103,8 @@ UIColor COLOR_ROSE[_UI_COLOR_LEVELS] = {
 	rgb(0xff, 0xd0, 0xce),
 	rgb(0xff, 0xe3, 0xe0),
 };
+
+UIColor* COLOR_PRIMARY = COLOR_RED;
+UIColor* COLOR_DARK = COLOR_NEUTRAL_GREY;
+UIColor* COLOR_TEXT = &COLOR_NEUTRAL_GREY[7];
+UIColor* COLOR_TEXT_LIGHT = &COLOR_NEUTRAL_GREY[4];

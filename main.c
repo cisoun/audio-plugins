@@ -10,10 +10,6 @@
 #include "ui/ui.h"
 #include <fftw3.h>
 
-UIColor* COLOR_DARK       = COLOR_NEUTRAL_GREY;
-UIColor* COLOR_PRIMARY    = COLOR_RED;
-UIColor* COLOR_TEXT       = &COLOR_NEUTRAL_GREY[7];
-UIColor* COLOR_TEXT_LIGHT = &COLOR_NEUTRAL_GREY[4];
 
 KitFileInfo* file;
 UIApp*       app;
@@ -103,6 +99,12 @@ static void on_window_draw(UIWidget* widget, UIContext* c) {
 }
 
 int main(int argc, char** argv) {
+	// Initialize color pointers
+	COLOR_DARK       = COLOR_NEUTRAL_GREY;
+	COLOR_PRIMARY    = COLOR_RED;
+	COLOR_TEXT       = &COLOR_NEUTRAL_GREY[7];
+	COLOR_TEXT_LIGHT = &COLOR_NEUTRAL_GREY[4];
+
 	app = ui_app(&(UIApp){
 		.name = "Test"
 	});
