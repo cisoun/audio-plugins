@@ -25,7 +25,7 @@ int allocs;
 #define destroy(o) if (o != NULL) { free(o); o = NULL; LOGFREE; }
 
 #ifdef _WIN32
-	#define PATH_SEPARATOR "\"
+	#define PATH_SEPARATOR "\\"
 #else
     #define PATH_SEPARATOR "/"
 #endif
