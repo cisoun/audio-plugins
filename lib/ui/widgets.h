@@ -2,7 +2,7 @@
 #define UI_WIDGETS_H
 
 #include "backend.h"
-#include "colors.h"
+#include "../kit.h"
 
 #define UIKnob(...) ui_knob(&(UIKnob)__VA_ARGS__)
 #define UIText(...) ui_knob(&(UIKnob)__VA_ARGS__)

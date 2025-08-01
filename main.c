@@ -2,13 +2,9 @@
 #include <math.h>
 #include "lib/kit-audio.h"
 #include "lib/kit.h"
-#include "lib/ui/backend.h"
-#include "lib/ui/colors.h"
-#include "lib/ui/file-dialog.h"
-#include "lib/ui/waveform.h"
-#include "lib/ui/widgets.h"
 #include "ui/ui.h"
-#include <fftw3.h>
+//#include <fftw3.h>
+
 
 
 KitFileInfo* file;

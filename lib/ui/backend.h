@@ -1,12 +1,13 @@
 #ifndef UI_BACKEND_H
 #define UI_BACKEND_H
 
-#include "../kit.h"
-#include "../kit-audio.h"
+
+//#include "../kit-audio.h"
 #include "cairo/cairo.h"
 #include "pugl/cairo.h"
 #include "pugl/pugl.h"
 #include <assert.h>
+#include <limits.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>

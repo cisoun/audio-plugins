@@ -2,6 +2,7 @@
 #define KIT_AUDIO_H
 
 #include "kit.h"
+#include <assert.h>
 #include <sndfile.h>
 #include <stdio.h>
 

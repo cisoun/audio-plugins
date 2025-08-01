@@ -1,9 +1,13 @@
 #ifndef UI_FILE_DIALOG_H
 #define UI_FILE_DIALOG_H
 
+#include "../kit.h"
 #include "backend.h"
 #include "colors.h"
 #include "widgets.h"
+#include <errno.h>
+#include <limits.h>
+#include <string.h>
 
 typedef struct {
 	WIDGET

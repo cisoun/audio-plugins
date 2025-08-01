@@ -1,9 +1,5 @@
 #include "backend.h"
-#include "colors.h"
-#include "file-dialog.h"
-#include "widgets.h"
-#include <limits.h>
-#include <stdio.h>
+#include "../kit.h"
 
 static double mouse_click_time;
 

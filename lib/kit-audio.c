@@ -1,6 +1,4 @@
 #include "kit-audio.h"
-#include "kit.h"
-#include <assert.h>
 
 KitAudio* kit_audio_from(const char* path) {
 	SF_INFO info;

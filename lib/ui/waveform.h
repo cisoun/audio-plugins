@@ -2,6 +2,10 @@
 #define UI_WAVEFORM_H
 
 #include "backend.h"
+#include "colors.h"
+#include "kit-audio.h"
+#include "kit-thread.h"
+#include <math.h>
 
 typedef struct{
 	WIDGET

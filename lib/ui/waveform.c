@@ -1,8 +1,4 @@
-#include "backend.h"
-#include "colors.h"
-#include "kit-thread.h"
 #include "waveform.h"
-#include <math.h>
 
 static void* ui_waveform_generate_waveform(void*);
 

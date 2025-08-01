@@ -1,10 +1,4 @@
-#include "backend.h"
-#include "colors.h"
 #include "file-dialog.h"
-#include "widgets.h"
-#include <errno.h>
-#include <limits.h>
-#include <string.h>
 
 static void open_file(UIFileDialog* fd, KitFileInfo* kfi) {
 	KitFileInfo* fi = ui_list_get_selection((UIWidget*)fd->list);
