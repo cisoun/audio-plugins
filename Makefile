@@ -36,8 +36,8 @@ darwin: $(LIB_DIR)/pugl/build_$(TARGET) $(BUILD_DIR)
 linux: $(LIB_DIR)/pugl/build_$(TARGET) $(BUILD_DIR)
 	cc $(CC_FLAGS) \
 	   $(LIB_DIR)/cairo/build/src/libcairo.so \
-	   $(LIB_DIR)/pugl/build/libpugl_x11-0.so.0.5.3.p/*.o \
-	   $(LIB_DIR)/pugl/build/libpugl_x11_cairo-0.so.0.5.3.p/*.o \
+	   $(LIB_DIR)/pugl/build/libpugl_x11-0.so.0.5.5.p/*.o \
+	   $(LIB_DIR)/pugl/build/libpugl_x11_cairo-0.so.0.5.5.p/*.o \
 	   -I $(LIB_DIR)/cairo/build/src \
 	   -I $(LIB_DIR)/cairo/src \
 	   -I $(LIB_DIR)/pugl/include \
