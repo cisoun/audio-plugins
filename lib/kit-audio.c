@@ -21,9 +21,9 @@ KitAudio* kit_audio_from(const char* path) {
 		}
 	}
 	destroy(data);
-	printf("INFO: channels:   %d\n",   info.channels);
-	printf("INFO: samplerate: %d\n",   info.samplerate);
-	printf("INFO: frames:     %lld\n", info.frames);
+	printf("INFO: channels:   %d\n",  info.channels);
+	printf("INFO: samplerate: %d\n",  info.samplerate);
+	printf("INFO: frames:     %ld\n", info.frames);
 	sf_close(file);
 	return a;
 }
