@@ -37,7 +37,7 @@ static void* ui_waveform_generate_waveform(void* args) {
 	UIWaveform* wf = (UIWaveform*)args;
 
 	if (wf->audio == NULL) {
-		return NULL;
+		return 0;
 	}
 
 	UIWidget*  widget         = (UIWidget*)wf;
@@ -78,7 +78,7 @@ static void* ui_waveform_generate_waveform(void* args) {
 	ui_widget_set_surface(widget, surface);
 	ui_widget_must_redraw(widget);
 
-	return NULL;
+	return 0;
 }
 
 void ui_waveform_set_audio(UIWidget* w, KitAudio* a) {

@@ -44,6 +44,7 @@ linux: $(LIB_DIR)/pugl/build_$(TARGET) $(BUILD_DIR)
 	   -lX11 \
 	   -lXext \
 	   main.c -o $(BUILD_DIR)/test
+	   -lpthread \
 
 clean:
 	rm -rf $(BUILD_DIR)
