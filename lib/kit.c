@@ -138,12 +138,23 @@ char* kit_string_join(const char* s0, ...) {
 }
 
 inline char* kit_string_join3(const char* a, const char* b, const char* c) {
+	// Null pointer safety checks
+	if (!a) a = "";
+	if (!b) b = "";
+	if (!c) c = "";
+	
 	size_t la     = strlen(a);
 	size_t lb     = strlen(b);
 	size_t lc     = strlen(c);
 	char*  buffer = alloc(char, la + lb + lc + 1);
-	strncpy(buffer, a, la);
-	strncpy(buffer + la, b, lb);
-	strncpy(buffer + la + lb, c, lc);
+	
+	// Use memcpy for efficiency and copy each string
+	memcpy(buffer, a, la);
+	memcpy(buffer + la, b, lb);
+	memcpy(buffer + la + lb, c, lc);
+	
+	// Null terminate the result
+	buffer[la + lb + lc] = '\0';
+	
 	return buffer;
 }
