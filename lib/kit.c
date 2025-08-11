@@ -1,45 +1,46 @@
 #include "kit.h"
-#include <assert.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 int allocs = 0;
 
-KitArray* kit_array(void) {
+KitArray* kit_array(unsigned int size) {
 	KitArray* a = new(KitArray);
 	assert(a != NULL);
-	a->items = NULL;
+	a->items = alloc(void*, size);
 	a->count = 0;
 	return a;
 }
 
-void kit_array_add(KitArray* a, void* i) {
-	assert(a != NULL);
-	a->items = realloc(a->items, sizeof(void*) * (a->count + 1));
-	a->items[a->count] = i;
-	a->count++;
+inline void kit_array_add(KitArray* a, void* i) {
+	a->items[a->count++] = i;
 }
 
-void kit_array_clear(KitArray* a) {
-	for (int i = 0; i < a->count; i++) {
-		destroy(a->items[i]);
-	}
+inline void kit_array_clear(KitArray* a) {
+	memset(a->items, 0, sizeof(void*) * a->count);
 	a->count = 0;
 }
 
-void kit_array_destroy(KitArray* a) {
+inline void kit_array_destroy(KitArray* a) {
+	destroy(a->items);
 	destroy(a);
 }
 
-void kit_array_remove_index(KitArray* a, int index) {
+void* kit_array_remove_index(KitArray* a, int index) {
+	void* item = a->items[index];
+
+	// Shift all elements after the index to the left.
 	for (int i = index; i < a->count - 1; i++) {
 		a[i] = a[i + 1];
 	}
-	a->items = realloc(a->items, sizeof(void*) * (a->count - 1));
+
+	a->items[a->count - 1] = NULL;
+	a->count--;
+
+	return item;
+}
+
+void kit_array_resize(KitArray* a, unsigned int size) {
+	a->items = realloc(a->items, sizeof(void*) * size);
+	assert(a->items != NULL);
 }
 
 KitFileInfo* kit_file_info(KitFileInfo i) {
@@ -77,10 +78,10 @@ void kit_file_info_array_clear(KitArray* a) {
 }
 
 void kit_file_info_array_destroy(KitArray* a) {
-	if (a->items) {
-		kit_file_info_array_clear(a);
+	for (int i = 0; i < a->count; i++) {
+		kit_file_info_destroy(a->items[i]);
 	}
-	destroy(a);
+	kit_array_destroy(a);
 }
 
 char* kit_path_parent(char* path) {
@@ -91,7 +92,7 @@ KitArray* kit_path_scan(char* path) {
 	struct dirent* entry = NULL;
 	DIR* reader          = opendir(path);
 	if (reader) {
-		KitArray* a = kit_array();
+		KitArray* a = kit_array(0);
 		(void)readdir(reader); // Pass first entry: ".".
 		while ((entry = readdir(reader)) != NULL) {
 			KitFileInfo* kfi = kit_file_info((KitFileInfo){
@@ -99,6 +100,7 @@ KitArray* kit_path_scan(char* path) {
 				.path = path,
 				.type = entry->d_type == DT_DIR ? KIT_FILE_TYPE_FOLDER : KIT_FILE_TYPE_FILE,
 			});
+			kit_array_resize(a, a->count + 1);
 			kit_array_add(a, kfi);
 		}
 		closedir(reader);
@@ -142,19 +144,18 @@ inline char* kit_string_join3(const char* a, const char* b, const char* c) {
 	if (!a) a = "";
 	if (!b) b = "";
 	if (!c) c = "";
-	
+
 	size_t la     = strlen(a);
 	size_t lb     = strlen(b);
 	size_t lc     = strlen(c);
 	char*  buffer = alloc(char, la + lb + lc + 1);
-	
+
 	// Use memcpy for efficiency and copy each string
 	memcpy(buffer, a, la);
 	memcpy(buffer + la, b, lb);
 	memcpy(buffer + la + lb, c, lc);
-	
+
 	// Null terminate the result
 	buffer[la + lb + lc] = '\0';
-	
 	return buffer;
 }

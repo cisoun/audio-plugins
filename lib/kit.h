@@ -12,9 +12,12 @@
 #ifndef KIT_H
 #define KIT_H
 
+#include <assert.h>
 #include <dirent.h>
-#include <limits.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int allocs;
 #define LOGALLOC printf("CALLOC: %d %s:%d\n", ++allocs, __FILE__, __LINE__)
@@ -48,14 +51,16 @@ typedef struct {
 
 #define kit_array_for_each(a, i) for (void** i = a->items; *i; ++i)
 
-KitArray*    kit_array                   (void);
+KitArray*    kit_array                   (unsigned int);
 void         kit_array_add               (KitArray*, void*);
 void         kit_array_clear             (KitArray*);
 void         kit_array_destroy           (KitArray*);
-void         kit_array_remove_index      (KitArray*, int);
+void*        kit_array_remove_index      (KitArray*, int);
+void         kit_array_resize            (KitArray*, unsigned int);
 
-KitFileInfo* kit_file_info               (KitFileInfo i);
-void         kit_file_info_destroy       (KitFileInfo* i);
+KitFileInfo* kit_file_info               (KitFileInfo);
+int          kit_file_info_get_full_path (KitFileInfo*, char*);
+void         kit_file_info_destroy       (KitFileInfo*);
 
 void         kit_file_info_array_clear   (KitArray*);
 void         kit_file_info_array_destroy (KitArray*);

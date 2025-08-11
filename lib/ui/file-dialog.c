@@ -101,8 +101,8 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 	fd->children       = children;
 	fd->children_count = 4;
 	fd->draw           = ui_file_dialog_draw;
-	fd->files          = kit_array();
 	fd->path           = kit_string_clone(args.path);
+	fd->files          = kit_array(0);
 	fd->state          = WIDGET_STATE_HIDDEN;
 	fd->type           = WIDGET_FILE_DIALOG;
 
@@ -158,14 +158,14 @@ void ui_file_dialog_draw(UIWidget* w, UIContext* c) {
 }
 
 void ui_file_dialog_scan(UIFileDialog* fd, const char* path) {
-	if (fd->files != NULL) {
-		kit_file_info_array_clear(fd->files);
-	}
+
+	kit_file_info_array_destroy(fd->files);
+
 	char buffer[PATH_MAX];
 	if (realpath(path, buffer)) {
 		fd->files = kit_path_scan(buffer);
 		if (fd->files == NULL) {
-			fd->files = kit_array();
+			fd->files = kit_array(1);
 			KitFileInfo* fi = kit_file_info((KitFileInfo){
 				.name = "..",
 				.path = fd->path,
