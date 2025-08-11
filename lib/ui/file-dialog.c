@@ -1,4 +1,7 @@
 #include "file-dialog.h"
+#include "backend.h"
+
+char* default_path = ".";
 
 static void open_file(UIFileDialog* fd, KitFileInfo* kfi) {
 	KitFileInfo* fi = ui_list_get_selection((UIWidget*)fd->list);
@@ -59,7 +62,7 @@ static void handle_selection_change(UIWidget* w, unsigned int index) {
 UIWidget* ui_file_dialog(UIFileDialog args) {
 	UIFileDialog* fd     = new(UIFileDialog);
 	UIWidget*     widget = (UIWidget*)fd;
-	set_default(args.path, ".");
+
 	memcpy(fd, &args, sizeof(UIFileDialog));
 
 	UIText* text           = new(UIText);
@@ -101,12 +104,15 @@ UIWidget* ui_file_dialog(UIFileDialog args) {
 	fd->children       = children;
 	fd->children_count = 4;
 	fd->draw           = ui_file_dialog_draw;
-	fd->path           = kit_string_clone(args.path);
 	fd->files          = kit_array(0);
 	fd->state          = WIDGET_STATE_HIDDEN;
 	fd->type           = WIDGET_FILE_DIALOG;
 
-	ui_file_dialog_scan(fd, fd->path);
+	if (args.path) {
+		ui_file_dialog_scan(fd, args.path);
+	} else {
+		ui_file_dialog_scan(fd, ".");
+	}
 
 	return widget;
 }
@@ -118,13 +124,11 @@ inline void ui_file_dialog_close(UIWidget* w) {
 
 void ui_file_dialog_destroy(UIWidget* w) {
 	UIFileDialog* fd = (UIFileDialog*)w;
-	if (fd->files) {
-		kit_file_info_array_destroy(fd->files);
-	}
 	ui_file_list_destroy(fd->list);
 	ui_button_destroy(fd->buttonOK);
 	ui_button_destroy(fd->buttonCancel);
 	ui_text_destroy(fd->text);
+	kit_file_info_array_destroy(fd->files);
 	destroy(fd->children);
 	destroy(fd->path);
 	destroy(fd);
@@ -164,20 +168,25 @@ void ui_file_dialog_scan(UIFileDialog* fd, const char* path) {
 	char buffer[PATH_MAX];
 	if (realpath(path, buffer)) {
 		fd->files = kit_path_scan(buffer);
+
+		// Update path.
+		destroy(fd->path);
+		fd->path = kit_string(buffer);
+
+		// No files? Add ".." anyway.
 		if (fd->files == NULL) {
 			fd->files = kit_array(1);
 			KitFileInfo* fi = kit_file_info((KitFileInfo){
 				.name = "..",
-				.path = fd->path,
+				.path = (char*)path,
 				.type = KIT_FILE_TYPE_FOLDER
 			});
 			kit_array_add(fd->files, fi);
 		}
-		char* new_path = kit_string_clone(buffer);
-		destroy(fd->path);
-		fd->path                 = new_path;
-		fd->list->items          = fd->files;
-		fd->list->offset_y       = 0;
+
+		fd->list->items    = fd->files;
+		fd->list->offset_y = 0;
+
 		ui_text_set_text((UIWidget*)fd->text, fd->path);
 		ui_list_select((UIWidget*)fd->list, 0);
 	}

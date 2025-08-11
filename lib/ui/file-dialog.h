@@ -6,7 +6,6 @@
 #include "colors.h"
 #include "widgets.h"
 #include <errno.h>
-#include <limits.h>
 #include <string.h>
 
 typedef struct {
