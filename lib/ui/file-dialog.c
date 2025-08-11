@@ -8,8 +8,8 @@ static void open_file(UIFileDialog* fd, KitFileInfo* kfi) {
 	}
 }
 
-static inline void open_path(UIFileDialog* fd, KitFileInfo* kfi) {
-	char* path = kit_string_join3(kfi->path, PATH_SEPARATOR, kfi->name);
+static void open_path(UIFileDialog* fd, KitFileInfo* kfi) {
+	char* path = kit_string_join3(kfi->path, KIT_PATH_SEPARATOR, kfi->name);
 	ui_file_dialog_scan(fd, path);
 	destroy(path);
 }

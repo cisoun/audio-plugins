@@ -85,7 +85,8 @@ void kit_file_info_array_destroy(KitArray* a) {
 }
 
 char* kit_path_parent(char* path) {
-	return strrchr(path, PATH_SEPARATOR[0]);
+	// BUG: what if separator has multiple characters?
+	return strrchr(path, KIT_PATH_SEPARATOR[0]);
 }
 
 KitArray* kit_path_scan(char* path) {

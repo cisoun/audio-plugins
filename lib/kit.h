@@ -20,6 +20,8 @@
 #include <string.h>
 
 int allocs;
+#define KIT_NAME_MAX 256
+#define KIT_PATH_MAX 1024
 #define LOGALLOC printf("CALLOC: %d %s:%d\n", ++allocs, __FILE__, __LINE__)
 #define LOGFREE printf("FREE: %d %s:%d\n", --allocs, __FILE__, __LINE__)
 
@@ -28,9 +30,9 @@ int allocs;
 #define destroy(o) if (o != NULL) { free(o); o = NULL; LOGFREE; }
 
 #ifdef _WIN32
-	#define PATH_SEPARATOR "\\"
+	#define KIT_PATH_SEPARATOR "\\"
 #else
-    #define PATH_SEPARATOR "/"
+    #define KIT_PATH_SEPARATOR "/"
 #endif
 
 typedef enum {
